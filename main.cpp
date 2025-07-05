@@ -343,8 +343,8 @@ int main() {
     std::cout << "Iniciando pipeline de pré-processamento de dados jurídicos." << std::endl;
 
     // 1. Carregar os dados
-    std::string csv_filename = "Sumarizacao_Doc_TCE-RJ.csv";
-    std::string column_to_process = "TEXTO";
+    std::string csv_filename = "Sumarizacao_Doc_TCERJ.csv";
+    std::string column_to_process = "Texto";
     std::cout << "Lendo coluna '" << column_to_process << "' do arquivo '" << csv_filename << "'..." << std::endl;
 
     // Criar uma instância do scheduler
@@ -395,8 +395,8 @@ int main() {
     std::cout << "\nPipeline de pré-processamento concluído." << std::endl;
 
     // Opcional: Mostrar o resultado do pré-processamento para algumas entradas
-    std::cout << "\nExemplo de texto após o pré-processamento (apenas as primeiras 5 entradas):" << std::endl;
-    for (size_t i = 0; i < std::min((size_t)5, scheduler.processed_texts.size()); ++i) {
+    std::cout << "\nExemplo de texto após o pré-processamento (apenas as primeiras 50 entradas):" << std::endl;
+    for (size_t i = 0; i < std::min((size_t)50, scheduler.processed_texts.size()); ++i) {
         // Limita a exibição para 150 caracteres para melhor leitura no console
         std::cout << "  Entrada " << i+1 << ": " << scheduler.processed_texts[i].substr(0, std::min((size_t)150, scheduler.processed_texts[i].length())) << "..." << std::endl;
     }
