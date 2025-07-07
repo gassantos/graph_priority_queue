@@ -482,19 +482,21 @@ int main() {
     std::vector<std::string> texts_for_sequential = initial_texts;
     run_sequential_pipeline(texts_for_sequential);
 
-    // --- Exemplo de texto após o pré-processamento (para ambos os pipelines) ---
-    std::cout << "\n--- Exemplo de texto após o pré-processamento (apenas as primeiras 5 entradas para comparação) ---\n";
-    // Opcional: Mostrar o resultado do pré-processamento para algumas entradas do pipeline PARALELO
-    std::cout << "\nResultado do Pipeline Paralelo (primeiras 5 entradas):\n";
-    for (size_t i = 0; i < std::min((size_t)5, parallel_scheduler.processed_texts.size()); ++i) {
-        printf("  Entrada %zu: %.150s...\n", i + 1, parallel_scheduler.processed_texts[i].c_str());
-    }
+    #ifdef DEBUG
+        // --- Exemplo de texto após o pré-processamento (para ambos os pipelines) ---
+        std::cout << "\n--- Exemplo de texto após o pré-processamento (apenas as primeiras 5 entradas para comparação) ---\n";
+        // Opcional: Mostrar o resultado do pré-processamento para algumas entradas do pipeline PARALELO
+        std::cout << "\nResultado do Pipeline Paralelo (primeiras 5 entradas):\n";
+        for (size_t i = 0; i < std::min((size_t)5, parallel_scheduler.processed_texts.size()); ++i) {
+            printf("  Entrada %zu: %.150s...\n", i + 1, parallel_scheduler.processed_texts[i].c_str());
+        }
 
-    // Opcional: Mostrar o resultado do pré-processamento para algumas entradas do pipeline SEQUENCIAL
-    std::cout << "\nResultado do Pipeline Sequencial (primeiras 5 entradas):\n";
-    for (size_t i = 0; i < std::min((size_t)5, texts_for_sequential.size()); ++i) {
-        printf("  Entrada %zu: %.150s...\n", i + 1, texts_for_sequential[i].c_str());
-    }
+        // Opcional: Mostrar o resultado do pré-processamento para algumas entradas do pipeline SEQUENCIAL
+        std::cout << "\nResultado do Pipeline Sequencial (primeiras 5 entradas):\n";
+        for (size_t i = 0; i < std::min((size_t)5, texts_for_sequential.size()); ++i) {
+            printf("  Entrada %zu: %.150s...\n", i + 1, texts_for_sequential[i].c_str());
+        }
+    #endif
     
     return 0;
 }
