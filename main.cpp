@@ -14,6 +14,7 @@
 #include <fstream>      // Para std::ifstream
 #include <sstream>      // Para std::stringstream
 #include <locale>       // Para std::tolower
+#include <numeric>      // Para std::accumulate
 
 // --- 1. Definição da Estrutura Task ---
 
@@ -147,7 +148,7 @@ void cleanText(std::vector<std::string>& texts) {
         text = std::regex_replace(text, std::regex("\\s+"), " "); // Múltiplos espaços para um
         text = std::regex_replace(text, std::regex("^\\s+|\\s+$"), ""); // Espaços no início/fim
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
+    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
     std::cout << "  [Task] CleanText concluído." << std::endl;
 }
 
@@ -158,17 +159,31 @@ void normalizeText(std::vector<std::string>& texts) {
         std::transform(text.begin(), text.end(), text.begin(),
                        [](unsigned char c){ return std::tolower(c); });
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
+    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
     std::cout << "  [Task] NormalizeText concluído." << std::endl;
 }
 
 // 3. Tokenização de palavras (simplificada, apenas divide por espaço)
 void wordTokenization(std::vector<std::string>& texts) {
-    std::cout << "  [Task] Executando WordTokenization (simulado)..." << std::endl;
+    std::cout << "  [Task] Executando WordTokenization (adaptado)..." << std::endl;
     // Em uma implementação real, cada string seria tokenizada em um vetor de palavras.
     // Para manter a assinatura e o fluxo de dados no pipeline (vector<string>),
     // esta função apenas simula a operação.
-    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
+    for (std::string& text : texts) {
+        // Simula a tokenização dividindo por espaços
+        std::vector<std::string> tokens;
+        std::istringstream iss(text);
+        std::string token;
+        while (iss >> token) {
+            tokens.push_back(token);
+        }
+        // Reconstroi o texto como uma string de tokens separados por espaço
+        text = std::accumulate(tokens.begin(), tokens.end(), std::string(),
+                               [](const std::string& a, const std::string& b) {
+                                   return a.empty() ? b : a + " " + b;
+                               });
+    }
+    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
     std::cout << "  [Task] WordTokenization concluído." << std::endl;
 }
 
@@ -176,7 +191,7 @@ void wordTokenization(std::vector<std::string>& texts) {
 void bpeTokenization(std::vector<std::string>& texts) {
     std::cout << "  [Task] Executando BPETokenization (simulado)..." << std::endl;
     // Implementação real exigiria uma biblioteca BPE.
-    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
+    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
     std::cout << "  [Task] BPETokenization concluído." << std::endl;
 }
 
@@ -184,7 +199,7 @@ void bpeTokenization(std::vector<std::string>& texts) {
 void partitionTokens(std::vector<std::string>& texts) {
     std::cout << "  [Task] Executando PartitionTokens (simulado)..." << std::endl;
     // Em um cenário real, dividiria as sequências de tokens em chunks.
-    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
+    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
     std::cout << "  [Task] PartitionTokens concluído." << std::endl;
 }
 
@@ -194,24 +209,28 @@ void addSpecialTokens(std::vector<std::string>& texts) {
     for (std::string& text : texts) {
         text = "[CLS] " + text + " [SEP] [EOF]";
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
-    std::cout << "  [Task] AddSpecialTokens concluído." << std::endl;
+    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
+    std::cout << "[Task] AddSpecialTokens concluído." << std::endl;
 }
 
 // 7. Conversão de tokens para índices - Simulado
 void tokensToIndices(std::vector<std::string>& texts) {
-    std::cout << "  [Task] Executando TokensToIndices (simulado)..." << std::endl;
+    std::cout << "[Task] Executando TokensToIndices (simulado)...\n";
     // Em uma implementação real, usaria um vocabulário para mapear tokens para IDs.
-    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
-    std::cout << "  [Task] TokensToIndices concluído." << std::endl;
+    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
+    std::cout << "[Task] TokensToIndices concluído.\n";
 }
 
 // 8. Geração de vetores de embeddings - Simulado
 void generateEmbeddings(std::vector<std::string>& texts) {
-    std::cout << "  [Task] Executando GenerateEmbeddings (simulado)..." << std::endl;
-    // Esta etapa real envolve um modelo de embedding e geraria vetores.
-    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
-    std::cout << "  [Task] GenerateEmbeddings concluído." << std::endl;
+    std::cout << "[Task] Executando GenerateEmbeddings (simulado)...\n";
+    // Use um modelo de embedding e gera vetores em linguagem C++
+    // Em uma implementação real, isso envolveria uma biblioteca de machine learning.
+    // Simula um atraso para a operação
+    // Aqui, apenas simula a operação com um atraso.
+
+    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
+    std::cout << "[Task] GenerateEmbeddings concluído.\n";
 }
 
 
@@ -264,7 +283,7 @@ public:
         Task& completed_task = tasks.at(task_id);
         completed_task.is_completed = true;
         completed_task_count++; // Incrementa o contador global de tarefas concluídas
-        std::cout << "Tarefa '" << task_id << "' concluída. Total concluídas: " << completed_task_count << std::endl;
+        std::cout << "Tarefa '" << task_id << "' finalizada! Total concluídas: " << completed_task_count.load() << std::endl;
 
         // Para cada tarefa que depende desta tarefa concluída
         for (const std::string& dependent_id : completed_task.dependents) {
@@ -294,7 +313,7 @@ public:
 
                 // Verifica novamente a condição de saída após ser acordado
                 if (completed_task_count.load() == tasks.size() && ready_queue.empty()) {
-                    std::cout << "Worker encerrando: todas as tarefas concluídas. (ID thread: " << std::this_thread::get_id() << ")" << std::endl;
+                    std::cout << "Worker encerrando: todas as tarefas concluídas. (ID thread: " << std::this_thread::get_id() << ")\n";
                     break; // Sai do loop do worker
                 }
 
@@ -302,7 +321,8 @@ public:
                     current_task_ptr = ready_queue.top(); // Pega o ponteiro
                     ready_queue.pop(); // Remove o ponteiro da fila
                     task_found = true;
-                    std::cout << "Worker (ID: " << std::this_thread::get_id() << ") pegou a tarefa: " << current_task_ptr->id << std::endl;
+                    std::cout << "Worker (ID: " << std::this_thread::get_id()
+                               << ") pegou a tarefa: " << current_task_ptr->id << std::endl;
                 }
             } // Lock é liberado aqui
 
@@ -315,9 +335,9 @@ public:
     }
 
     void run(int num_workers) {
-        processed_texts.clear(); // Limpa o vetor de textos antes de iniciar, se houver execuções anteriores
-        completed_task_count = 0; // Reseta o contador de tarefas concluídas
-
+        // processed_texts é inicializado e preenchido antes desta chamada
+        // completed_task_count é resetado no construtor
+        
         // Inicia os workers
         std::vector<std::thread> workers;
         for (int i = 0; i < num_workers; ++i) {
@@ -333,73 +353,137 @@ public:
                 worker.join();
             }
         }
-        std::cout << "Todos os workers terminaram a execução." << std::endl;
+        std::cout << "Todos os workers terminaram a execução.\n";
     }
 };
+
+// --- Novo Método para Execução Sequencial ---
+
+void run_sequential_pipeline(std::vector<std::string>& texts_data) {
+    std::cout << "\n--- Iniciando Pipeline Sequencial ---\n";
+    auto start_seq = std::chrono::high_resolution_clock::now();
+
+    // Resetar o contador de tarefas completas (para o caso de ser rodado após o paralelo)
+    // Embora não seja estritamente necessário para o pipeline sequencial, mantém a consistência
+    // com o estado das funções de Task que imprimem o "Task concluído"
+    std::atomic<int> sequential_task_count(0);
+
+    // Execução das tarefas em sequência
+    cleanText(texts_data);
+    sequential_task_count++;
+    std::cout << "Tarefa 'CleanText' finalizada! Total concluídas: " << sequential_task_count.load() << std::endl;
+
+    normalizeText(texts_data);
+    sequential_task_count++;
+    std::cout << "Tarefa 'NormalizeText' finalizada! Total concluídas: " << sequential_task_count.load() << std::endl;
+
+    wordTokenization(texts_data);
+    sequential_task_count++;
+    std::cout << "Tarefa 'WordTokenization' finalizada! Total concluídas: " << sequential_task_count.load() << std::endl;
+
+    bpeTokenization(texts_data);
+    sequential_task_count++;
+    std::cout << "Tarefa 'BPETokenization' finalizada! Total concluídas: " << sequential_task_count.load() << std::endl;
+
+    partitionTokens(texts_data);
+    sequential_task_count++;
+    std::cout << "Tarefa 'PartitionTokens' finalizada! Total concluídas: " << sequential_task_count.load() << std::endl;
+
+    addSpecialTokens(texts_data);
+    sequential_task_count++;
+    std::cout << "Tarefa 'AddSpecialTokens' finalizada! Total concluídas: " << sequential_task_count.load() << std::endl;
+
+    tokensToIndices(texts_data);
+    sequential_task_count++;
+    std::cout << "Tarefa 'TokensToIndices' finalizada! Total concluídas: " << sequential_task_count.load() << std::endl;
+
+    generateEmbeddings(texts_data);
+    sequential_task_count++;
+    std::cout << "Tarefa 'GenerateEmbeddings' finalizada! Total concluídas: " << sequential_task_count.load() << std::endl;
+    
+    auto end_seq = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_seq = end_seq - start_seq;
+    std::cout << "--- Pipeline Sequencial Concluído ---\n";
+    std::cout << "Total de tarefas concluídas (sequencial): " << sequential_task_count.load() << std::endl;
+    std::cout << "Tempo total de execução (sequencial): " << elapsed_seq.count() << " segundos.\n";
+}
+
 
 // --- 4. Função Principal (main) ---
 
 int main() {
-    std::cout << "Iniciando pipeline de pré-processamento de dados jurídicos." << std::endl;
+    std::cout << "Iniciando pipeline de pré-processamento de dados jurídicos.\n";
 
     // 1. Carregar os dados
     std::string csv_filename = "Sumarizacao_Doc_TCERJ.csv";
     std::string column_to_process = "Texto";
-    std::cout << "Lendo coluna '" << column_to_process << "' do arquivo '" << csv_filename << "'..." << std::endl;
+    std::cout << "Lendo coluna '" << column_to_process << "' do arquivo '" << csv_filename << "'...\n";
 
-    // Criar uma instância do scheduler
-    WorkflowScheduler scheduler;
+    std::vector<std::string> initial_texts = readCsvColumn(csv_filename, column_to_process);
 
-    // Inicializar os dados no scheduler
-    scheduler.processed_texts = readCsvColumn(csv_filename, column_to_process);
-
-    if (scheduler.processed_texts.empty()) {
-        std::cerr << "Nenhum dado lido ou coluna não encontrada. Abortando pipeline." << std::endl;
+    if (initial_texts.empty()) {
+        std::cerr << "Nenhum dado lido ou coluna não encontrada. Abortando pipeline.\n";
         return 1;
     }
-    std::cout << "Total de " << scheduler.processed_texts.size() << " entradas lidas da coluna '" << column_to_process << "'." << std::endl;
+    std::cout << "Total de " << initial_texts.size() << " entradas lidas da coluna '" << column_to_process << "'.\n";
 
+    // --- Execução do Pipeline Paralelo (com grafo e threads) ---
+    // Cria uma cópia dos dados para cada execução para garantir que as operações não afetem a outra
+    std::vector<std::string> texts_for_parallel = initial_texts;
+    WorkflowScheduler parallel_scheduler;
+    parallel_scheduler.processed_texts = texts_for_parallel; // Atribui a cópia dos dados
 
-    // 2. Definir as tarefas do workflow com suas prioridades e funções
+    // 2. Definir as tarefas do workflow com suas prioridades e funções (para o scheduler paralelo)
     // Prioridades: menor número = maior prioridade
-    scheduler.addTask(Task("CleanText", TaskType::TEXT_CLEANING, 10, cleanText));
-    scheduler.addTask(Task("NormalizeText", TaskType::NORMALIZATION, 20, normalizeText));
-    scheduler.addTask(Task("WordTokenization", TaskType::WORD_TOKENIZATION, 30, wordTokenization));
-    scheduler.addTask(Task("BPETokenization", TaskType::BPE_TOKENIZATION, 40, bpeTokenization));
-    scheduler.addTask(Task("PartitionTokens", TaskType::PARTITION_TOKENS, 50, partitionTokens));
-    scheduler.addTask(Task("AddSpecialTokens", TaskType::ADD_SPECIAL_TOKENS, 60, addSpecialTokens));
-    scheduler.addTask(Task("TokensToIndices", TaskType::TOKENS_TO_INDICES, 70, tokensToIndices));
-    scheduler.addTask(Task("GenerateEmbeddings", TaskType::GENERATE_EMBEDDINGS, 80, generateEmbeddings));
+    parallel_scheduler.addTask(Task("CleanText", TaskType::TEXT_CLEANING, 10, cleanText));
+    parallel_scheduler.addTask(Task("NormalizeText", TaskType::NORMALIZATION, 20, normalizeText));
+    parallel_scheduler.addTask(Task("WordTokenization", TaskType::WORD_TOKENIZATION, 30, wordTokenization));
+    parallel_scheduler.addTask(Task("BPETokenization", TaskType::BPE_TOKENIZATION, 40, bpeTokenization));
+    parallel_scheduler.addTask(Task("PartitionTokens", TaskType::PARTITION_TOKENS, 50, partitionTokens));
+    parallel_scheduler.addTask(Task("AddSpecialTokens", TaskType::ADD_SPECIAL_TOKENS, 60, addSpecialTokens));
+    parallel_scheduler.addTask(Task("TokensToIndices", TaskType::TOKENS_TO_INDICES, 70, tokensToIndices));
+    parallel_scheduler.addTask(Task("GenerateEmbeddings", TaskType::GENERATE_EMBEDDINGS, 80, generateEmbeddings));
 
-
-    // 3. Definir as dependências conforme o grafo
+    // 3. Definir as dependências conforme o grafo (para o scheduler paralelo)
     // Preprocessing
-    scheduler.addDependency("NormalizeText", "CleanText");
-    scheduler.addDependency("WordTokenization", "NormalizeText");
-    scheduler.addDependency("BPETokenization", "WordTokenization");
-    scheduler.addDependency("PartitionTokens", "BPETokenization");
+    parallel_scheduler.addDependency("NormalizeText", "CleanText");
+    parallel_scheduler.addDependency("WordTokenization", "NormalizeText");
+    parallel_scheduler.addDependency("BPETokenization", "WordTokenization");
+    parallel_scheduler.addDependency("PartitionTokens", "BPETokenization");
 
     // Embeddings Generation
-    scheduler.addDependency("AddSpecialTokens", "PartitionTokens");
-    scheduler.addDependency("TokensToIndices", "AddSpecialTokens");
-    scheduler.addDependency("GenerateEmbeddings", "TokensToIndices");
+    parallel_scheduler.addDependency("AddSpecialTokens", "PartitionTokens");
+    parallel_scheduler.addDependency("TokensToIndices", "AddSpecialTokens");
+    parallel_scheduler.addDependency("GenerateEmbeddings", "TokensToIndices");
 
-
-    // 4. Executar o workflow
-    // É recomendado usar std::thread::hardware_concurrency() para determinar o número ideal
-    // de threads, mas para este exemplo, um número fixo é usado.
     int num_worker_threads = 4; // Exemplo: 4 threads de worker
-    std::cout << "\nIniciando o agendador com " << num_worker_threads << " threads de worker..." << std::endl;
-    scheduler.run(num_worker_threads);
+    auto start_parallel = std::chrono::high_resolution_clock::now();
+    std::cout << "\n--- Iniciando Pipeline Paralelo com " << num_worker_threads
+              << " threads de worker ---\n";
+    parallel_scheduler.run(num_worker_threads);
+    auto end_parallel = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_parallel = end_parallel - start_parallel;
+    std::cout << "--- Pipeline Paralelo Concluído ---\n";
+    std::cout << "Tempo total de execução (paralelo): " << elapsed_parallel.count() << " segundos.\n";
 
-    std::cout << "\nPipeline de pré-processamento concluído." << std::endl;
+    // --- Execução do Pipeline Sequencial ---
+    // Cria uma nova cópia dos dados para o pipeline sequencial
+    std::vector<std::string> texts_for_sequential = initial_texts;
+    run_sequential_pipeline(texts_for_sequential);
 
-    // Opcional: Mostrar o resultado do pré-processamento para algumas entradas
-    std::cout << "\nExemplo de texto após o pré-processamento (apenas as primeiras 50 entradas):" << std::endl;
-    for (size_t i = 0; i < std::min((size_t)50, scheduler.processed_texts.size()); ++i) {
-        // Limita a exibição para 150 caracteres para melhor leitura no console
-        std::cout << "  Entrada " << i+1 << ": " << scheduler.processed_texts[i].substr(0, std::min((size_t)150, scheduler.processed_texts[i].length())) << "..." << std::endl;
+    // --- Exemplo de texto após o pré-processamento (para ambos os pipelines) ---
+    std::cout << "\n--- Exemplo de texto após o pré-processamento (apenas as primeiras 5 entradas para comparação) ---\n";
+    // Opcional: Mostrar o resultado do pré-processamento para algumas entradas do pipeline PARALELO
+    std::cout << "\nResultado do Pipeline Paralelo (primeiras 50 entradas):\n";
+    for (size_t i = 0; i < std::min((size_t)50, parallel_scheduler.processed_texts.size()); ++i) {
+        printf("  Entrada %zu: %.150s...\n", i + 1, parallel_scheduler.processed_texts[i].c_str());
     }
 
+    // Opcional: Mostrar o resultado do pré-processamento para algumas entradas do pipeline SEQUENCIAL
+    std::cout << "\nResultado do Pipeline Sequencial (primeiras 50 entradas):\n";
+    for (size_t i = 0; i < std::min((size_t)50, texts_for_sequential.size()); ++i) {
+        printf("  Entrada %zu: %.150s...\n", i + 1, texts_for_sequential[i].c_str());
+    }
+    
     return 0;
 }
