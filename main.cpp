@@ -246,23 +246,79 @@ void bpeTokenizationAdvanced(TokenizerWrapper& tokenizer_wrapper, const std::vec
     std::cout << "  [Task] BPETokenization (versão avançada) concluído. Gerados " << encoded_outputs.size() << " encodings." << std::endl;
 }
 
-// 5. Particionar texto em tokens - Simulado
+// 5. Particionar texto em tokens
 void partitionTokens(std::vector<std::string>& texts) {
-    printf("  [Task] Executando PartitionTokens (simulado)...\n");
-    // Em um cenário real, dividiria as sequências de tokens em chunks.
-    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
-    printf("  [Task] PartitionTokens concluído.\n");
+    std::cout << "  [Task] Executando PartitionTokens..." << std::endl;
+    const size_t MAX_SEQUENCE_LENGTH = 128; // Exemplo de tamanho máximo da sequência de tokens
+
+    std::vector<std::string> partitioned_texts;
+
+    for (const std::string& text_tokens_str : texts) {
+        std::istringstream iss(text_tokens_str);
+        std::string token;
+        std::vector<std::string> tokens;
+        
+        // Extrai todos os tokens da string
+        while (iss >> token) {
+            tokens.push_back(token);
+        }
+
+        if (tokens.size() > MAX_SEQUENCE_LENGTH) {
+            // Trunca a sequência para o tamanho máximo
+            std::vector<std::string> truncated_tokens(tokens.begin(), tokens.begin() + MAX_SEQUENCE_LENGTH);
+            
+            // Reconstrói a string truncada
+            std::string truncated_str = "";
+            for (size_t i = 0; i < truncated_tokens.size(); ++i) {
+                truncated_str += truncated_tokens[i];
+                if (i < truncated_tokens.size() - 1) {
+                    truncated_str += " ";
+                }
+            }
+            partitioned_texts.push_back(truncated_str);
+            // Em uma implementação real, os chunks restantes também seriam adicionados como novas entradas
+            // ou armazenados em uma estrutura de dados de múltiplas sequências por documento.
+            // Aqui, por simplificação, apenas o primeiro chunk é mantido.
+        } else {
+            partitioned_texts.push_back(text_tokens_str); // Mantém a sequência como está
+        }
+    }
+    texts = partitioned_texts; // Atualiza o vetor original
+    std::cout << "  [Task] PartitionTokens concluído." << std::endl;
 }
 
-// 6. Adicionar tokens especiais (CLS, SEP, EOF) - Simulado
+
+// 6. Adicionar tokens especiais (CLS, SEP, EOF) - Versão compatível com tokens de texto
 void addSpecialTokens(std::vector<std::string>& texts) {
-    printf("  [Task] Executando AddSpecialTokens...\n");
+    std::cout << "  [Task] Executando AddSpecialTokens..." << std::endl;
+    
     for (std::string& text : texts) {
-        text = "[CLS] " + text + " [SEP] [EOF]";
+        // Como os dados já podem conter [CLS] e [SEP] da tokenização BPE,
+        // vamos adicionar apenas [EOF] no final se não estiver presente
+        if (text.find("[EOF]") == std::string::npos) {
+            text += " [EOF]";
+        }
+        
+        // Garante que há [CLS] no início se não estiver presente
+        if (text.find("[CLS]") != 0) {
+            text = "[CLS] " + text;
+        }
+        
+        // Garante que há [SEP] antes do [EOF] se não estiver presente
+        if (text.find("[SEP]") == std::string::npos) {
+            // Insere [SEP] antes do [EOF]
+            size_t eof_pos = text.find("[EOF]");
+            if (eof_pos != std::string::npos) {
+                text.insert(eof_pos, "[SEP] ");
+            } else {
+                text += " [SEP]";
+            }
+        }
     }
-    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
-    printf("[Task] AddSpecialTokens concluído.\n");
+    
+    std::cout << "  [Task] AddSpecialTokens concluído." << std::endl;
 }
+
 
 // 7. Conversão de tokens para índices - Simulado
 void tokensToIndices(std::vector<std::string>& texts) {
