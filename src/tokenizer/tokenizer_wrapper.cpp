@@ -1,4 +1,4 @@
-#include "tokenizer_wrapper.h"
+#include "../../include/tokenizer/tokenizer_wrapper.h"
 
 // Implementações do namespace hf_tokenizers
 namespace hf_tokenizers {

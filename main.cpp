@@ -17,7 +17,7 @@
 #include <numeric>      // Para std::accumulate
 
 // Importa as funções do tokenizer_wrapper
-#include "tokenizer_wrapper.h"
+#include "include/tokenizer/tokenizer_wrapper.h"
 
 // --- Variáveis globais para tokensToIndices ---
 std::map<std::string, int> vocabulary;
