@@ -1,6 +1,6 @@
 # graph_priority_summary
 
-Este repositório contém uma implementação em C++ de um pipeline de pré-processamento de dados textuais jurídicos. O pipeline é projetado para processar a coluna 'Texto' de um arquivo CSV, aplicando uma série de transformações. O foco principal da solução é a orquestração de tarefas utilizando um grafo de dependência e uma fila de prioridade para execução paralela __multithreaded__. Para fins de comparação de desempenho, também é incluída uma implementação sequencial do mesmo pipeline.
+Este repositório contém uma implementação em C++ de um pipeline de pré-processamento de dados textuais jurídicos. O pipeline é projetado para processar a coluna 'Texto' de um arquivo CSV, aplicando uma série de transformações. O foco principal da solução é a orquestração de tarefas utilizando um grafo de dependência e uma fila de prioridade para execução paralela _multithreaded_. Para fins de comparação de desempenho, também é incluída uma implementação sequencial do mesmo pipeline.
 
 ## 1. Descrição do Projeto
 
@@ -40,9 +40,9 @@ O pipeline opera da seguinte forma:
 
 ## 3. Como Compilar
 
-Certifique-se de que o arquivo `main.cpp` e o `csv` (com a coluna `Texto` contendo os dados jurídicos) estejam no mesmo diretório.
+Certifique-se de que os arquivo `main.cpp`, `tokenizer_wrapper` e o `csv` (com a coluna `Texto`) estejam no mesmo diretório.
 
 Abra o terminal e execute o seguinte comando:
 
 ```bash
-g++ -std=c++17 -O2 main.cpp -o workflow_processor -pthread
+g++ -std=c++17 -pthread -O2 main.cpp tokenizer_wrapper.cpp -o workflow
