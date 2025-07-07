@@ -16,6 +16,9 @@
 #include <locale>       // Para std::tolower
 #include <numeric>      // Para std::accumulate
 
+// Importa as funções do tokenizer_wrapper
+#include "tokenizer_wrapper.h"
+
 // --- 1. Definição da Estrutura Task ---
 
 enum class TaskType {
@@ -198,12 +201,49 @@ void wordTokenization(std::vector<std::string>& texts) {
     printf("  [Task] WordTokenization concluído.\n");
 }
 
-// 4. Tokenizador BPE (Byte Pair Encoding) - Simulado
+// 4. Tokenizador BPE (Byte Pair Encoding)
+// Versão simplificada para funcionar com o sistema de tarefas atual
 void bpeTokenization(std::vector<std::string>& texts) {
-    std::cout << "  [Task] Executando BPETokenization (simulado)..." << std::endl;
-    // Implementação real exigiria uma biblioteca BPE.
-    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
-    printf("  [Task] BPETokenization concluído.\n");
+    std::cout << "  [Task] Executando BPETokenization..." << std::endl;
+    
+    // Cria um tokenizador temporário para demonstração
+    try {
+        TokenizerWrapper tokenizer("vocab.txt", "merges.txt");
+        
+        for (std::string& text : texts) {
+            // Simula a tokenização BPE
+            auto encoding = tokenizer.tokenize_and_add_special_tokens(text);
+            // Para manter compatibilidade com o pipeline, convertemos de volta para string
+            // Em um cenário real, você manteria os encodings em uma estrutura separada
+            std::string token_representation = "[CLS] ";
+            for (const auto& token : encoding.tokens) {
+                if (token.text != "[CLS]" && token.text != "[SEP]" && token.text != "[EOF]") {
+                    token_representation += token.text + " ";
+                }
+            }
+            token_representation += "[SEP]";
+            text = token_representation;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Erro durante a tokenização: " << e.what() << std::endl;
+    }
+    
+    std::cout << "  [Task] BPETokenization concluído." << std::endl;
+}
+
+// 4.1. Versão avançada da tokenização BPE (para uso direto)
+void bpeTokenizationAdvanced(TokenizerWrapper& tokenizer_wrapper, const std::vector<std::string>& input_texts, std::vector<hf_tokenizers::Encoding>& encoded_outputs) {
+    std::cout << "  [Task] Executando BPETokenization (versão avançada)..." << std::endl;
+    encoded_outputs.clear(); // Limpa saídas anteriores
+    for (const std::string& text : input_texts) {
+        try {
+            encoded_outputs.push_back(tokenizer_wrapper.tokenize_and_add_special_tokens(text));
+        } catch (const std::exception& e) {
+            std::cerr << "Erro durante a tokenização: " << e.what() << std::endl;
+            // Decide como lidar com o erro: pular, lançar novamente, logar.
+        }
+    }
+    std::cout << "  [Task] BPETokenization (versão avançada) concluído. Gerados " << encoded_outputs.size() << " encodings." << std::endl;
 }
 
 // 5. Particionar texto em tokens - Simulado
