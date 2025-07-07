@@ -19,6 +19,31 @@
 // Importa as funções do tokenizer_wrapper
 #include "tokenizer_wrapper.h"
 
+// --- Variáveis globais para tokensToIndices ---
+std::map<std::string, int> vocabulary;
+const int UNK_ID_TOKENS_TO_INDICES = 0; // ID para tokens desconhecidos
+
+// Função para inicializar o vocabulário usado em tokensToIndices
+void initialize_vocabulary() {
+    static bool initialized = false;
+    if (initialized) return;
+    
+    // Vocabulário simulado para mapeamento de tokens para IDs
+    vocabulary = {
+        // Tokens especiais
+        {"[CLS]", 101}, {"[SEP]", 102}, {"[EOF]", 103}, {"[UNK]", 0},
+        // Tokens comuns do domínio jurídico
+        {"o", 1}, {"e", 2}, {"a", 3}, {"do", 4}, {"da", 5},
+        {"um", 6}, {"documento", 7}, {"visa", 8}, {"apresentar", 9},
+        {"fluxo", 10}, {"tarefas", 11}, {"para", 12}, {"sumarização", 13},
+        {"texto", 14}, {"documentos", 15}, {"jurídicos", 16}, {"dados", 17},
+        {"processo", 18}, {"tribunal", 19}, {"justiça", 20}, {"lei", 21},
+        {"artigo", 22}, {"código", 23}, {"civil", 24}, {"penal", 25}
+    };
+    
+    initialized = true;
+}
+
 // --- 1. Definição da Estrutura Task ---
 
 enum class TaskType {
@@ -320,12 +345,40 @@ void addSpecialTokens(std::vector<std::string>& texts) {
 }
 
 
-// 7. Conversão de tokens para índices - Simulado
+// 7. Conversão de tokens para índices (compatível com tokens de texto)
 void tokensToIndices(std::vector<std::string>& texts) {
-    printf("[Task] Executando TokensToIndices (simulado)...\n");
-    // Em uma implementação real, usaria um vocabulário para mapear tokens para IDs.
-    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
-    printf("[Task] TokensToIndices concluído.\n");
+    std::cout << "[Task] Executando TokensToIndices (simulado)..." << std::endl;
+    
+    // Assegura que o vocabulário esteja inicializado
+    initialize_vocabulary(); 
+
+    for (std::string& text_tokens_str : texts) {
+        std::vector<int> final_indexed_sequence;
+        std::istringstream iss(text_tokens_str);
+        std::string token_str; 
+
+        while (iss >> token_str) {
+            // Busca o token no vocabulário
+            auto it = vocabulary.find(token_str); 
+            if (it != vocabulary.end()) {
+                final_indexed_sequence.push_back(it->second);
+            } else {
+                final_indexed_sequence.push_back(UNK_ID_TOKENS_TO_INDICES); // Token não encontrado no vocabulário
+            }
+        }
+
+        // Converte a sequência de IDs para string
+        text_tokens_str = ""; 
+        if (!final_indexed_sequence.empty()) {
+            for (size_t i = 0; i < final_indexed_sequence.size(); ++i) {
+                text_tokens_str += std::to_string(final_indexed_sequence[i]);
+                if (i < final_indexed_sequence.size() - 1) {
+                    text_tokens_str += " ";
+                }
+            }
+        }
+    }
+    std::cout << "[Task] TokensToIndices concluído." << std::endl;
 }
 
 // 8. Geração de vetores de embeddings - Simulado
