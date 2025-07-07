@@ -381,16 +381,21 @@ void tokensToIndices(std::vector<std::string>& texts) {
     std::cout << "[Task] TokensToIndices concluído." << std::endl;
 }
 
-// 8. Geração de vetores de embeddings - Simulado
+// 8. Geração de vetores de embeddings - Simulado (Aprimorado com placeholders)
 void generateEmbeddings(std::vector<std::string>& texts) {
-    printf("[Task] Executando GenerateEmbeddings (simulado)...\n");
-    // Use um modelo de embedding e gera vetores em linguagem C++
-    // Em uma implementação real, isso envolveria uma biblioteca de machine learning.
-    // Simula um atraso para a operação
-    // Aqui, apenas simula a operação com um atraso.
+    std::cout << "[Task] Executando GenerateEmbeddings (simulado - gerando placeholders de embeddings)...\n";
+    // Em uma implementação real, esta função receberia os IDs numéricos (int)
+    // e passaria por um modelo de embedding (LibTorch, ONNX Runtime) para
+    // gerar vetores densos de float.
+    // O tipo de retorno idealmente seria std::vector<std::vector<float>>.
 
-    //std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simula trabalho
-    printf("[Task] GenerateEmbeddings concluído.\n");
+    // Para manter a assinatura std::vector<std::string>&, vamos substituir
+    // o conteúdo da string por um placeholder para simular que o texto
+    // foi transformado em um embedding.
+    for (size_t i = 0; i < texts.size(); ++i) {
+        texts[i] = "EMBEDDED_DOCUMENT_" + std::to_string(i + 1); // Ex: "EMBEDDED_DOCUMENT_1"
+    }
+    std::cout << "[Task] GenerateEmbeddings concluído.\n";
 }
 
 
