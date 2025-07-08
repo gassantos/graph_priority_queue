@@ -111,7 +111,7 @@ int main() {
         // 1. Carregar os dados usando o módulo de utilitários
         legal_doc_pipeline::utils::ScopedTimer loading_timer("Carregamento de dados");
         
-        std::string csv_filename = "Sumarizacao_Doc_TCERJ.csv";
+        std::string csv_filename = "docs.csv";
         std::string column_to_process = "Texto";
         
         std::cout << "\nLendo coluna '" << column_to_process 

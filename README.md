@@ -61,7 +61,7 @@ O sistema está organizado em namespaces e módulos bem definidos:
 ├── CMakeLists.txt                    # Sistema de build com CMake
 ├── README.md                         # Esta documentação
 ├── LICENSE                           # Licença do projeto
-└── Sumarizacao_Doc_TCERJ.csv        # Dataset de entrada
+└── dataset.csv                       # Dataset de entrada
 ```
 
 ## 🔧 Componentes Principais
@@ -167,8 +167,8 @@ g++ -std=c++17 -Wall -Wextra -O2 -pthread \
 ## ⚡ Resultados de Performance
 
 ### Configuração de Teste
-- **Dataset**: Sumarizacao_Doc_TCERJ.csv (documentos jurídicos do TCERJ)
-- **Hardware**: 4 threads trabalhadoras
+- **Dataset**: docs.csv (documentos de textos jurídicos)
+- **Hardware**: 4 threads (default: 4 workers) ou máximo de CPUs disponíveis
 - **Compilador**: g++ com otimização -O2
 
 ### Resultados Típicos
