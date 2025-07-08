@@ -56,3 +56,5 @@ tests/empty_test.csv
 tests/header_only_test.csv
 test_pipeline_data.csv
 *.csv.tmp
+
+# Keep test_docs.csv as it contains real sample data for testing

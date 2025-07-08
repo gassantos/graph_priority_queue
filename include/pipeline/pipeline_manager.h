@@ -31,6 +31,10 @@ namespace pipeline {
         PipelineConfig config;                                      ///< Configuração do pipeline
         std::unique_ptr<scheduler::WorkflowScheduler> scheduler;    ///< Scheduler para execução paralela
         utils::Timer timer;                                         ///< Timer para medição de performance
+        
+        // Estatísticas de execução
+        mutable double last_parallel_time = 0.0;                   ///< Tempo da última execução paralela
+        mutable double last_sequential_time = 0.0;                 ///< Tempo da última execução sequencial
 
         /**
          * @brief Configura as tarefas no scheduler

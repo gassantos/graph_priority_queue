@@ -88,6 +88,13 @@ namespace utils {
          * @return String sem aspas duplas
          */
         std::string removeQuotes(const std::string& str);
+        
+        /**
+         * @brief Remove BOM UTF-8 de uma string, se presente
+         * @param str String a ser processada
+         * @return String sem BOM UTF-8
+         */
+        std::string removeBOM(const std::string& str);
     };
 
 } // namespace utils

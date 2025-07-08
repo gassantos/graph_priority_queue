@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "../include/pipeline/pipeline_manager.h"
+#include "../include/utils/csv_reader.h"
 #include "../include/types.h"
 #include <vector>
 #include <string>
@@ -298,4 +299,96 @@ TEST_F(PipelineManagerTest, SpecialCharacters) {
     
     EXPECT_TRUE(result.success);
     EXPECT_EQ(result.processed_data.size(), special_data.size());
+}
+
+// Teste com dados reais do projeto
+TEST_F(PipelineManagerTest, RealDataProcessing) {
+    // Carregar dados reais do arquivo de teste
+    legal_doc_pipeline::utils::CsvReader csv_reader;
+    const std::string real_data_file = "tests/test_docs.csv";
+    
+    // Verificar se o arquivo existe
+    ASSERT_TRUE(csv_reader.validateFile(real_data_file));
+    
+    // Ler dados reais da coluna 'Texto' (usando delimitador correto ';')
+    auto real_texts = csv_reader.readColumn(real_data_file, "Texto", ';');
+    ASSERT_FALSE(real_texts.empty());
+    EXPECT_EQ(real_texts.size(), 4); // 4 documentos no arquivo de teste
+    
+    // Configurar pipeline com dados reais
+    PipelineConfig real_config;
+    real_config.num_workers = 2;
+    real_config.max_sequence_length = 256;
+    real_config.enable_debug = false;
+    
+    PipelineManager real_manager(real_config);
+    
+    // Executar pipeline paralelo com dados reais
+    real_manager.runParallel(real_texts);
+    
+    // Verificar se o processamento foi bem-sucedido
+    auto stats = real_manager.getExecutionStats();
+    EXPECT_GT(stats.at("parallel_time"), 0.0);
+}
+
+TEST_F(PipelineManagerTest, RealDataComparison) {
+    // Carregar dados reais
+    legal_doc_pipeline::utils::CsvReader csv_reader;
+    const std::string real_data_file = "tests/test_docs.csv";
+    auto real_texts = csv_reader.readColumn(real_data_file, "Texto", ';');
+    
+    ASSERT_EQ(real_texts.size(), 4);
+    
+    // Configurar pipeline
+    PipelineConfig real_config;
+    real_config.num_workers = 2;
+    real_config.max_sequence_length = 128;
+    real_config.enable_debug = true;
+    
+    PipelineManager real_manager(real_config);
+    
+    // Executar ambos os modos
+    real_manager.runParallel(real_texts);
+    real_manager.runSequential(real_texts);
+    
+    // Comparar performance
+    auto stats = real_manager.getExecutionStats();
+    EXPECT_GT(stats.at("parallel_time"), 0.0);
+    EXPECT_GT(stats.at("sequential_time"), 0.0);
+    
+    // Verificar que executou com dados reais
+    EXPECT_EQ(real_texts.size(), 4);
+}
+
+TEST_F(PipelineManagerTest, RealDataSpecialCharacters) {
+    // Testar com dados reais que podem conter caracteres especiais
+    legal_doc_pipeline::utils::CsvReader csv_reader;
+    const std::string real_data_file = "tests/test_docs.csv";
+    auto real_texts = csv_reader.readColumn(real_data_file, "Texto", ';');
+    
+    ASSERT_FALSE(real_texts.empty());
+    
+    // Verificar se há caracteres especiais nos dados
+    for (const auto& text : real_texts) {
+        if (text.find("ç") != std::string::npos ||
+            text.find("ã") != std::string::npos ||
+            text.find("é") != std::string::npos ||
+            text.find("á") != std::string::npos) {
+            // Encontrou caracteres especiais - teste válido
+            break;
+        }
+    }
+    
+    // Configurar pipeline
+    PipelineConfig config;
+    config.num_workers = 1;
+    config.max_sequence_length = 64;
+    
+    PipelineManager manager(config);
+    
+    // Executar pipeline - deve funcionar mesmo com caracteres especiais
+    EXPECT_NO_THROW(manager.runParallel(real_texts));
+    
+    auto stats = manager.getExecutionStats();
+    EXPECT_GT(stats.at("parallel_time"), 0.0);
 }

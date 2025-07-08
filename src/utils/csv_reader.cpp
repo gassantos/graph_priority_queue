@@ -27,6 +27,7 @@ namespace utils {
         }
 
         // Parse do cabeçalho
+        line = removeBOM(line); // Remove BOM UTF-8 se presente
         std::vector<std::string> headers = parseLine(line, delimiter);
         int column_index = -1;
         
@@ -75,6 +76,7 @@ namespace utils {
         }
 
         // Parse do cabeçalho
+        line = removeBOM(line); // Remove BOM UTF-8 se presente
         std::vector<std::string> headers = parseLine(line, delimiter);
         
         // Inicializa os vetores para cada coluna
@@ -116,6 +118,7 @@ namespace utils {
 
         std::string line;
         if (std::getline(file, line)) {
+            line = removeBOM(line); // Remove BOM UTF-8 se presente
             std::vector<std::string> headers = parseLine(line, delimiter);
             for (const auto& header : headers) {
                 column_names.push_back(removeQuotes(header));
@@ -127,14 +130,14 @@ namespace utils {
     }
 
     std::string CsvReader::removeQuotes(const std::string& str) {
-        // Como o parser já remove as aspas, só precisamos remover espaços
+        // Como o parser já remove as aspas, só precisamos remover espaços e caracteres de controle
         std::string result = str;
-        // Remove espaços no início e no final
-        size_t start = result.find_first_not_of(" \t");
+        // Remove espaços e caracteres de controle no início e no final (incluindo \r, \n)
+        size_t start = result.find_first_not_of(" \t\r\n");
         if (start != std::string::npos) {
             result = result.substr(start);
         }
-        size_t end = result.find_last_not_of(" \t");
+        size_t end = result.find_last_not_of(" \t\r\n");
         if (end != std::string::npos) {
             result = result.substr(0, end + 1);
         }
@@ -164,6 +167,17 @@ namespace utils {
         cells.push_back(current_cell);
         
         return cells;
+    }
+
+    std::string CsvReader::removeBOM(const std::string& str) {
+        // BOM UTF-8 são os bytes: 0xEF 0xBB 0xBF
+        if (str.size() >= 3 && 
+            static_cast<unsigned char>(str[0]) == 0xEF &&
+            static_cast<unsigned char>(str[1]) == 0xBB &&
+            static_cast<unsigned char>(str[2]) == 0xBF) {
+            return str.substr(3);
+        }
+        return str;
     }
 
 } // namespace utils

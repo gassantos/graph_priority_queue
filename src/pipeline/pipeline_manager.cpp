@@ -40,6 +40,7 @@ namespace pipeline {
             bool success = scheduler->run(processed_data, config.num_workers);
 
             timer.stop();
+            last_parallel_time = timer.getElapsedSeconds();
 
             if (success) {
                 result.processed_data = scheduler->getProcessedData();
@@ -55,6 +56,7 @@ namespace pipeline {
 
         } catch (const std::exception& e) {
             timer.stop();
+            last_parallel_time = timer.getElapsedSeconds();
             result.error_message = "Exceção durante execução paralela: " + std::string(e.what());
         }
 
@@ -120,6 +122,7 @@ namespace pipeline {
                 std::cout << "Tarefa 'GenerateEmbeddings' finalizada! Total concluídas: " << task_count << std::endl;
 
                 timer.stop();
+                last_sequential_time = timer.getElapsedSeconds();
 
                 result.processed_data = processed_data;
                 result.execution_time = timer.getElapsedSeconds();
@@ -141,6 +144,7 @@ namespace pipeline {
                 bool success = sequential_scheduler->run(processed_data, 1);
 
                 timer.stop();
+                last_sequential_time = timer.getElapsedSeconds();
 
                 if (success) {
                     result.processed_data = sequential_scheduler->getProcessedData();
@@ -157,6 +161,7 @@ namespace pipeline {
 
         } catch (const std::exception& e) {
             timer.stop();
+            last_sequential_time = timer.getElapsedSeconds();
             result.error_message = "Exceção durante execução sequencial: " + std::string(e.what());
         }
 
@@ -278,6 +283,8 @@ namespace pipeline {
     std::map<std::string, double> PipelineManager::getExecutionStats() const {
         std::map<std::string, double> stats;
         stats["last_execution_time"] = timer.getElapsedSeconds();
+        stats["parallel_time"] = last_parallel_time;
+        stats["sequential_time"] = last_sequential_time;
         
         if (scheduler) {
             auto scheduler_stats = scheduler->getExecutionStats();
@@ -293,6 +300,8 @@ namespace pipeline {
             scheduler->clear();
         }
         timer.reset();
+        last_parallel_time = 0.0;
+        last_sequential_time = 0.0;
     }
 
 } // namespace pipeline

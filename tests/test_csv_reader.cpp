@@ -161,3 +161,90 @@ TEST_F(CsvReaderTest, FilePermissions) {
     fs::remove(no_perm_filename);
     #endif
 }
+
+// Testes com arquivo de dados reais do projeto
+TEST_F(CsvReaderTest, ReadRealDataFile) {
+    const std::string real_data_file = "tests/test_docs.csv";
+    
+    // Verificar se o arquivo existe
+    ASSERT_TRUE(reader.validateFile(real_data_file));
+    
+    // Verificar se podemos ler os nomes das colunas (usando delimitador correto ';')
+    auto columns = reader.getColumnNames(real_data_file, ';');
+    EXPECT_FALSE(columns.empty());
+    
+    // Verificar colunas específicas esperadas
+    bool has_processo = std::find(columns.begin(), columns.end(), "Processo") != columns.end();
+    bool has_texto = std::find(columns.begin(), columns.end(), "Texto") != columns.end();
+    bool has_data = std::find(columns.begin(), columns.end(), "DataSessao") != columns.end();
+    
+    EXPECT_TRUE(has_processo);
+    EXPECT_TRUE(has_texto);
+    EXPECT_TRUE(has_data);
+}
+
+TEST_F(CsvReaderTest, ReadRealDataColumn) {
+    const std::string real_data_file = "tests/test_docs.csv";
+    
+    // Ler coluna 'Texto' dos dados reais (usando delimitador correto ';')
+    auto textos = reader.readColumn(real_data_file, "Texto", ';');
+    
+    // Deve ter exatamente 4 entradas (5 linhas no arquivo - 1 cabeçalho)
+    EXPECT_EQ(textos.size(), 4);
+    
+    // Verificar se o primeiro texto contém conteúdo esperado
+    EXPECT_FALSE(textos[0].empty());
+    EXPECT_TRUE(textos[0].find("PLENÁRIO") != std::string::npos ||
+                textos[0].find("PROCESSO") != std::string::npos ||
+                textos[0].find("TCE-RJ") != std::string::npos);
+}
+
+TEST_F(CsvReaderTest, ReadRealDataProcessColumn) {
+    const std::string real_data_file = "tests/test_docs.csv";
+    
+    // Ler coluna 'Processo' dos dados reais (usando delimitador correto ';')
+    auto processos = reader.readColumn(real_data_file, "Processo", ';');
+    
+    // Deve ter exatamente 4 entradas
+    EXPECT_EQ(processos.size(), 4);
+    
+    // Verificar se o primeiro processo tem formato esperado (números/ano)
+    EXPECT_FALSE(processos[0].empty());
+    EXPECT_TRUE(processos[0].find("/2024") != std::string::npos ||
+                processos[0].find("/2023") != std::string::npos ||
+                processos[0].find("/2025") != std::string::npos);
+}
+
+TEST_F(CsvReaderTest, RealDataUTF8WithBOM) {
+    const std::string real_data_file = "tests/test_docs.csv";
+    
+    // O arquivo tem BOM UTF-8, verificar se é lido corretamente
+    auto columns = reader.getColumnNames(real_data_file);
+    
+    // A primeira coluna deve ser "Processo", não ter caracteres estranhos do BOM
+    EXPECT_FALSE(columns.empty());
+    EXPECT_EQ(columns[0], "Processo");
+    
+    // Verificar que não há caracteres de controle no início
+    EXPECT_TRUE(columns[0][0] >= 'A' && columns[0][0] <= 'Z');
+}
+
+TEST_F(CsvReaderTest, RealDataAllColumns) {
+    const std::string real_data_file = "tests/test_docs.csv";
+    
+    // Verificar todas as colunas esperadas
+    auto columns = reader.getColumnNames(real_data_file);
+    
+    std::vector<std::string> expected_columns = {
+        "Processo", "DataSessao", "Texto", "Resumo", "Legislacao",
+        "Pareceres", "CorpoInstrutivo", "MinisterioPublicoContas",
+        "VotoRelator", "DispositivoVoto"
+    };
+    
+    EXPECT_EQ(columns.size(), expected_columns.size());
+    
+    for (const auto& expected_col : expected_columns) {
+        bool found = std::find(columns.begin(), columns.end(), expected_col) != columns.end();
+        EXPECT_TRUE(found) << "Coluna '" << expected_col << "' não encontrada";
+    }
+}
