@@ -4,6 +4,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -pthread
 DEBUG_FLAGS = -g -DDEBUG
+LDFLAGS = 
 INCLUDE_DIRS = -I.
 
 # Directories
@@ -60,15 +61,15 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)/utils $(BUILD_DIR)/pipeline $(
 
 # Link version
 $(TARGET): $(OBJECTS) main.cpp | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) $(OBJECTS) main.cpp -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) $(OBJECTS) main.cpp $(LDFLAGS) -o $@
 
 # Link debug version
 $(TARGET_DEBUG): $(OBJECTS) main.cpp | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(DEBUG_FLAGS) $(INCLUDE_DIRS) $(OBJECTS) main.cpp -o $@
+	$(CXX) $(CXXFLAGS) $(DEBUG_FLAGS) $(INCLUDE_DIRS) $(OBJECTS) main.cpp $(LDFLAGS) -o $@
 
 # Link test version
 $(TARGET_TESTS): $(OBJECTS) $(TEST_SOURCES) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) $(OBJECTS) $(TEST_SOURCES) -lgtest -lgtest_main -pthread -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) $(OBJECTS) $(TEST_SOURCES) $(LDFLAGS) -lgtest -lgtest_main -pthread -o $@
 
 # Clean build files
 clean:
@@ -89,6 +90,30 @@ run-tests: $(TARGET_TESTS)
 # Shorthand for running tests
 test: run-tests
 
+# Coverage build targets
+coverage: clean-coverage build-coverage run-tests-coverage
+
+clean-coverage:
+	rm -f *.gcda *.gcno build/*.gcda build/*.gcno src/**/*.gcda src/**/*.gcno
+	rm -f coverage.info coverage.info.cleaned coverage.xml
+	rm -rf coverage-html
+
+build-coverage:
+	@echo "Building tests with coverage flags..."
+	$(MAKE) tests \
+		CXXFLAGS="-std=c++17 -Wall -Wextra -g --coverage -O0 -fprofile-arcs -ftest-coverage" \
+		LDFLAGS="--coverage"
+
+run-tests-coverage: $(TARGET_TESTS)
+	@echo "Running tests to generate coverage data..."
+	./$(TARGET_TESTS) --gtest_output=xml:test-results-coverage.xml
+	@echo "Coverage data files generated:"
+	@find . -name "*.gcda" -type f 2>/dev/null || echo "No .gcda files found"
+	@find . -name "*.gcno" -type f 2>/dev/null || echo "No .gcno files found"
+
+# Backward compatibility
+tests-coverage: build-coverage
+
 # Install (copy to system location - optional)
 install: $(TARGET)
 	cp $(TARGET) /usr/local/bin/pipeline_processor
@@ -108,7 +133,9 @@ help:
 	@echo "  run-debug   - Build and run debug version"
 	@echo "  run-tests   - Build and run tests"
 	@echo "  test        - Build and run tests (shorthand)"
+	@echo "  coverage    - Build and run tests with coverage"
 	@echo "  clean       - Remove all build files"
+	@echo "  clean-coverage - Remove coverage data files"
 	@echo "  install     - Install to system (requires sudo)"
 	@echo "  structure   - Show project file structure"
 	@echo "  help        - Show this help message"
@@ -122,7 +149,7 @@ $(BUILD_DIR)/%.d: $(SRC_DIR)/%.cpp | $(BUILD_DIR)/utils $(BUILD_DIR)/pipeline $(
 	@$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -MM -MT $(BUILD_DIR)/$*.o $< > $@
 
 # Phony targets
-.PHONY: all debug tests clean run run-debug run-tests test install structure help
+.PHONY: all debug tests clean run run-debug run-tests test install structure help coverage clean-coverage tests-coverage run-tests-coverage
 
 # Special targets
 .DEFAULT_GOAL := all
