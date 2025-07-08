@@ -38,11 +38,11 @@ add_library(pipeline_lib STATIC ${LIBRARY_SOURCES})
 target_link_libraries(pipeline_lib Threads::Threads)
 
 # Main executable
-add_executable(pipeline_processor main_modular.cpp)
+add_executable(pipeline_processor main.cpp)
 target_link_libraries(pipeline_processor pipeline_lib)
 
 # Debug version
-add_executable(pipeline_processor_debug main_modular.cpp)
+add_executable(pipeline_processor_debug main.cpp)
 target_link_libraries(pipeline_processor_debug pipeline_lib)
 target_compile_definitions(pipeline_processor_debug PRIVATE DEBUG)
 
