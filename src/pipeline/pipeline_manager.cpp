@@ -61,7 +61,8 @@ namespace pipeline {
         return result;
     }
 
-    PipelineResult PipelineManager::runSequential(const std::vector<std::string>& input_data) {
+    PipelineResult PipelineManager::runSequential(const std::vector<std::string>& input_data, 
+                                                 bool force_single_thread) {
         PipelineResult result;
         result.success = false;
 
@@ -71,58 +72,88 @@ namespace pipeline {
         }
 
         try {
-            std::cout << "\n--- Iniciando Pipeline Sequencial ---" << std::endl;
+            std::cout << "\n--- Iniciando Pipeline Sequencial ";
+            if (force_single_thread) {
+                std::cout << "(Modo Thread Única) ";
+            }
+            std::cout << "---" << std::endl;
 
             timer.start();
 
             // Prepara dados
             std::vector<std::string> processed_data = prepareData(input_data);
 
-            // Executa as tarefas em sequência
-            size_t task_count = 0;
+            if (force_single_thread) {
+                // Execução verdadeiramente sequencial - uma tarefa de cada vez, sem paralelismo
+                size_t task_count = 0;
 
-            TextProcessor::cleanText(processed_data);
-            task_count++;
-            std::cout << "Tarefa 'CleanText' finalizada! Total concluídas: " << task_count << std::endl;
+                TextProcessor::cleanTextSequential(processed_data);
+                task_count++;
+                std::cout << "Tarefa 'CleanText' finalizada! Total concluídas: " << task_count << std::endl;
 
-            TextProcessor::normalizeText(processed_data);
-            task_count++;
-            std::cout << "Tarefa 'NormalizeText' finalizada! Total concluídas: " << task_count << std::endl;
+                TextProcessor::normalizeTextSequential(processed_data);
+                task_count++;
+                std::cout << "Tarefa 'NormalizeText' finalizada! Total concluídas: " << task_count << std::endl;
 
-            TextProcessor::wordTokenization(processed_data);
-            task_count++;
-            std::cout << "Tarefa 'WordTokenization' finalizada! Total concluídas: " << task_count << std::endl;
+                TextProcessor::wordTokenizationSequential(processed_data);
+                task_count++;
+                std::cout << "Tarefa 'WordTokenization' finalizada! Total concluídas: " << task_count << std::endl;
 
-            TextProcessor::bpeTokenization(processed_data);
-            task_count++;
-            std::cout << "Tarefa 'BPETokenization' finalizada! Total concluídas: " << task_count << std::endl;
+                TextProcessor::bpeTokenization(processed_data);
+                task_count++;
+                std::cout << "Tarefa 'BPETokenization' finalizada! Total concluídas: " << task_count << std::endl;
 
-            TextProcessor::partitionTokens(processed_data, config.max_sequence_length);
-            task_count++;
-            std::cout << "Tarefa 'PartitionTokens' finalizada! Total concluídas: " << task_count << std::endl;
+                TextProcessor::partitionTokens(processed_data, config.max_sequence_length);
+                task_count++;
+                std::cout << "Tarefa 'PartitionTokens' finalizada! Total concluídas: " << task_count << std::endl;
 
-            TextProcessor::addSpecialTokens(processed_data);
-            task_count++;
-            std::cout << "Tarefa 'AddSpecialTokens' finalizada! Total concluídas: " << task_count << std::endl;
+                TextProcessor::addSpecialTokens(processed_data);
+                task_count++;
+                std::cout << "Tarefa 'AddSpecialTokens' finalizada! Total concluídas: " << task_count << std::endl;
 
-            TextProcessor::tokensToIndices(processed_data);
-            task_count++;
-            std::cout << "Tarefa 'TokensToIndices' finalizada! Total concluídas: " << task_count << std::endl;
+                TextProcessor::tokensToIndices(processed_data);
+                task_count++;
+                std::cout << "Tarefa 'TokensToIndices' finalizada! Total concluídas: " << task_count << std::endl;
 
-            TextProcessor::generateEmbeddings(processed_data);
-            task_count++;
-            std::cout << "Tarefa 'GenerateEmbeddings' finalizada! Total concluídas: " << task_count << std::endl;
+                TextProcessor::generateEmbeddings(processed_data);
+                task_count++;
+                std::cout << "Tarefa 'GenerateEmbeddings' finalizada! Total concluídas: " << task_count << std::endl;
 
-            timer.stop();
+                timer.stop();
 
-            result.processed_data = processed_data;
-            result.execution_time = timer.getElapsedSeconds();
-            result.tasks_completed = task_count;
-            result.success = true;
+                result.processed_data = processed_data;
+                result.execution_time = timer.getElapsedSeconds();
+                result.tasks_completed = task_count;
+                result.success = true;
 
-            std::cout << "--- Pipeline Sequencial Concluído ---" << std::endl;
-            std::cout << "Total de tarefas concluídas (sequencial): " << task_count << std::endl;
-            std::cout << "Tempo total de execução (sequencial): " << timer.getElapsedString() << std::endl;
+                std::cout << "--- Pipeline Sequencial Concluído ---" << std::endl;
+                std::cout << "Total de tarefas concluídas (sequencial): " << task_count << std::endl;
+                std::cout << "Tempo total de execução (sequencial): " << timer.getElapsedString() << std::endl;
+            } else {
+                // Modo sequencial anterior (pode usar scheduler com 1 worker)
+                // Criar um scheduler temporário com configuração sequencial
+                auto sequential_scheduler = std::make_unique<scheduler::WorkflowScheduler>();
+                sequential_scheduler->clear();
+                setupTasks(sequential_scheduler.get());
+                setupDependencies(sequential_scheduler.get());
+
+                // Executa com apenas 1 worker
+                bool success = sequential_scheduler->run(processed_data, 1);
+
+                timer.stop();
+
+                if (success) {
+                    result.processed_data = sequential_scheduler->getProcessedData();
+                    result.execution_time = timer.getElapsedSeconds();
+                    result.tasks_completed = sequential_scheduler->getExecutionStats().at("completed_tasks");
+                    result.success = true;
+
+                    std::cout << "--- Pipeline Sequencial Concluído ---" << std::endl;
+                    std::cout << "Tempo total de execução (sequencial): " << timer.getElapsedString() << std::endl;
+                } else {
+                    result.error_message = "Falha na execução do pipeline sequencial";
+                }
+            }
 
         } catch (const std::exception& e) {
             timer.stop();

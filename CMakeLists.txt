@@ -63,12 +63,12 @@ add_custom_target(run
     COMMENT "Running the pipeline processor"
 )
 
-add_custom_target(run-legacy
-    COMMAND pipeline_processor_legacy
-    DEPENDS pipeline_processor_legacy
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running the legacy pipeline processor"
-)
+# add_custom_target(run-legacy
+#     COMMAND pipeline_processor_legacy
+#     DEPENDS pipeline_processor_legacy
+#     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+#     COMMENT "Running the legacy pipeline processor"
+# )
 
 add_custom_target(run-debug
     COMMAND pipeline_processor_debug
@@ -82,12 +82,12 @@ add_custom_target(performance-test
     COMMAND echo "=== Performance Comparison ==="
     COMMAND echo "Running modular version..."
     COMMAND time ./pipeline_processor
-    COMMAND echo ""
-    COMMAND echo "Running legacy version..."
-    COMMAND time ./pipeline_processor_legacy
-    DEPENDS pipeline_processor pipeline_processor_legacy
+    # COMMAND echo ""
+    # COMMAND echo "Running legacy version..."
+    # COMMAND time ./pipeline_processor_legacy
+    DEPENDS pipeline_processor #pipeline_processor_legacy
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running performance comparison"
+    # COMMENT "Running performance comparison"
 )
 
 # Show project structure

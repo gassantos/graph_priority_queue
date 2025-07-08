@@ -5,6 +5,8 @@
 #include <iostream>
 #include <sstream>
 #include <numeric>
+#include <thread>
+#include <chrono>
 
 namespace legal_doc_pipeline {
 namespace pipeline {
@@ -258,5 +260,94 @@ namespace pipeline {
         vocabulary_initialized = false;
     }
 
+    void TextProcessor::cleanTextSequential(std::vector<std::string>& texts) {
+        std::cout << "  [Task] Executando CleanText (Sequencial Puro)..." << std::endl;
+        
+        // Processa um texto por vez, sem possibilidade de paralelização
+        for (size_t i = 0; i < texts.size(); ++i) {
+            std::string& text = texts[i];
+            
+            // Remove tags HTML
+            text = std::regex_replace(text, std::regex("<.*?>"), " ");
+            
+            // Mantém apenas caracteres alfanuméricos, acentuados e espaços
+            text = std::regex_replace(text, 
+                std::regex("[^a-zA-Z0-9\\sÀ-ÿ]", std::regex::ECMAScript | std::regex::collate), 
+                " ");
+            
+            // Substitui múltiplos espaços por um único espaço
+            text = std::regex_replace(text, std::regex("\\s+"), " ");
+            
+            // Remove espaços no início e fim
+            text = std::regex_replace(text, std::regex("^\\s+|\\s+$"), "");
+            
+            // Adiciona uma pequena pausa para garantir que não há otimização agressiva
+            if (i % 10000 == 0 && i > 0) {
+                std::this_thread::sleep_for(std::chrono::microseconds(1));
+            }
+        }
+        
+        std::cout << "  [Task] CleanText (Sequencial Puro) concluído." << std::endl;
+    }
+
+    void TextProcessor::normalizeTextSequential(std::vector<std::string>& texts) {
+        std::cout << "  [Task] Executando NormalizeText (Sequencial Puro)..." << std::endl;
+        
+        // Processa um texto por vez
+        for (size_t i = 0; i < texts.size(); ++i) {
+            std::string& text = texts[i];
+            
+            // Converte para minúsculas caractere por caractere
+            for (char& c : text) {
+                c = std::tolower(static_cast<unsigned char>(c));
+            }
+            
+            // Pequena pausa ocasional
+            if (i % 10000 == 0 && i > 0) {
+                std::this_thread::sleep_for(std::chrono::microseconds(1));
+            }
+        }
+        
+        std::cout << "  [Task] NormalizeText (Sequencial Puro) concluído." << std::endl;
+    }
+
+    void TextProcessor::wordTokenizationSequential(std::vector<std::string>& texts) {
+        std::cout << "  [Task] Executando WordTokenization (Sequencial Puro)..." << std::endl;
+        
+        // Expressão regular para encontrar palavras e pontuação
+        std::regex word_punct_regex("[a-zA-Z0-9À-ÿ]+|[.,!?;:\"'()\\[\\]{}]", 
+                                   std::regex::ECMAScript | std::regex::collate);
+
+        // Processa um texto por vez
+        for (size_t i = 0; i < texts.size(); ++i) {
+            std::string& text = texts[i];
+            std::vector<std::string> tokens;
+            auto words_begin = std::sregex_iterator(text.begin(), text.end(), word_punct_regex);
+            auto words_end = std::sregex_iterator();
+
+            for (std::sregex_iterator iter = words_begin; iter != words_end; ++iter) {
+                std::smatch match = *iter;
+                std::string token = match.str();
+                
+                // Filtra tokens vazios ou de apenas espaço
+                if (!token.empty() && !std::all_of(token.begin(), token.end(), ::isspace)) {
+                    tokens.push_back(token);
+                }
+            }
+            
+            // Reconstrói o texto como uma string de tokens separados por espaço
+            text = std::accumulate(tokens.begin(), tokens.end(), std::string(),
+                                  [](const std::string& a, const std::string& b) {
+                                      return a.empty() ? b : a + " " + b;
+                                  });
+            
+            // Pequena pausa ocasional
+            if (i % 10000 == 0 && i > 0) {
+                std::this_thread::sleep_for(std::chrono::microseconds(1));
+            }
+        }
+        
+        std::cout << "  [Task] WordTokenization (Sequencial Puro) concluído." << std::endl;
+    }
 } // namespace pipeline
 } // namespace legal_doc_pipeline

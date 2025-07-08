@@ -41,3 +41,8 @@
 *.dwo
 workflow
 workflow_processor
+
+# CMake files build
+build/
+bin/
+pipeline_*

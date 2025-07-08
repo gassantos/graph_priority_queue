@@ -80,9 +80,11 @@ namespace pipeline {
         /**
          * @brief Executa o pipeline em modo sequencial
          * @param input_data Dados de entrada
+         * @param force_single_thread Força execução em thread única
          * @return Resultado da execução
          */
-        PipelineResult runSequential(const std::vector<std::string>& input_data);
+        PipelineResult runSequential(const std::vector<std::string>& input_data, 
+                                    bool force_single_thread = true);
 
         /**
          * @brief Executa ambos os modos e compara performance

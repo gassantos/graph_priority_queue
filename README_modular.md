@@ -298,9 +298,9 @@ PipelineManager manager(custom_config);
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-## 👥 Autores
+## 👥 Autor
 
-- **Desenvolvedor Principal** - Implementação inicial e arquitetura modular
+- **[Gustavo Alexandre](https://github.com/gassantos)**
 
 ## 🙏 Agradecimentos
 

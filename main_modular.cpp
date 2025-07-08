@@ -4,6 +4,7 @@
 #include "include/types.h"
 #include <iostream>
 #include <algorithm>
+#include <thread>
 
 /**
  * @file main.cpp
@@ -47,9 +48,11 @@ void displayResults(const legal_doc_pipeline::PipelineResult& result,
  * @brief Função para imprimir estatísticas detalhadas
  * @param parallel_result Resultado do pipeline paralelo
  * @param sequential_result Resultado do pipeline sequencial
+ * @param num_workers Número de workers utilizados
  */
 void printDetailedStats(const legal_doc_pipeline::PipelineResult& parallel_result,
-                       const legal_doc_pipeline::PipelineResult& sequential_result) {
+                       const legal_doc_pipeline::PipelineResult& sequential_result,
+                       unsigned int num_workers) {
     std::cout << "\n=== ESTATÍSTICAS DETALHADAS ===" << std::endl;
     
     if (parallel_result.success) {
@@ -68,11 +71,12 @@ void printDetailedStats(const legal_doc_pipeline::PipelineResult& parallel_resul
     
     if (parallel_result.success && sequential_result.success) {
         double speedup = sequential_result.execution_time / parallel_result.execution_time;
-        double efficiency = speedup / 4.0; // Assumindo 4 workers
+        double efficiency = speedup / static_cast<double>(num_workers);
         
         std::cout << "\nComparação de Performance:" << std::endl;
         std::cout << "  - Speedup: " << speedup << "x" << std::endl;
         std::cout << "  - Eficiência: " << (efficiency * 100) << "%" << std::endl;
+        std::cout << "  - Workers utilizados: " << num_workers << std::endl;
     }
 }
 
@@ -85,9 +89,23 @@ int main() {
 
     // Configuração do pipeline
     legal_doc_pipeline::PipelineConfig config;
-    config.num_workers = 4;
+    
+    // Detecta automaticamente o número máximo de threads disponíveis
+    unsigned int max_threads = std::thread::hardware_concurrency();
+    
+    // Se não conseguir detectar, usa um valor padrão conservador
+    if (max_threads == 0) {
+        max_threads = 4;
+        std::cout << "Aviso: Não foi possível detectar o número de threads. Usando valor padrão: " << max_threads << std::endl;
+    }
+    
+    config.num_workers = max_threads;
     config.enable_debug = false;
     config.max_sequence_length = 128;
+    
+    std::cout << "Configuração do pipeline:" << std::endl;
+    std::cout << "  - Threads disponíveis detectadas: " << max_threads << std::endl;
+    std::cout << "  - Workers configurados: " << config.num_workers << std::endl;
 
     try {
         // 1. Carregar os dados usando o módulo de utilitários
@@ -128,7 +146,7 @@ int main() {
             displayResults(sequential_result, "Pipeline Sequencial");
         #endif
 
-        printDetailedStats(parallel_result, sequential_result);
+        printDetailedStats(parallel_result, sequential_result, config.num_workers);
 
         // 4. Verificar consistência dos resultados
         if (parallel_result.success && sequential_result.success) {

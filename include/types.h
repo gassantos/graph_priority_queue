@@ -82,6 +82,16 @@ namespace legal_doc_pipeline {
         size_t max_sequence_length = 128;       ///< Tamanho máximo de sequência
         std::string vocab_file = "vocab.txt";   ///< Arquivo de vocabulário
         std::string merges_file = "merges.txt"; ///< Arquivo de merges BPE
+        
+        /**
+         * @brief Cria uma configuração para execução sequencial pura
+         * @return Configuração com 1 worker apenas
+         */
+        static PipelineConfig createSequentialConfig() {
+            PipelineConfig seq_config;
+            seq_config.num_workers = 1;
+            return seq_config;
+        }
     };
 
     /**

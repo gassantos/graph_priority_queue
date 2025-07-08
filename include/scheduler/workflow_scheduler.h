@@ -30,7 +30,7 @@ namespace scheduler {
         std::priority_queue<Task*, std::vector<Task*>, TaskPtrCompare> ready_queue; ///< Fila de tarefas prontas
         std::mutex queue_mutex;                                         ///< Mutex para proteger acesso às estruturas
         std::condition_variable cv_tasks_ready;                         ///< Condição para sinalizar tarefas prontas
-        std::atomic<int> completed_task_count;                          ///< Contador de tarefas concluídas
+        std::atomic<size_t> completed_task_count;                       ///< Contador de tarefas concluídas
         std::vector<std::string> processed_texts;                       ///< Dados sendo processados
         std::vector<std::thread> workers;                               ///< Pool de threads trabalhadoras
         std::atomic<bool> shutdown_requested;                           ///< Flag para shutdown gracioso

@@ -28,7 +28,7 @@ OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 # Executables
 TARGET = $(BIN_DIR)/pipeline_processor
 TARGET_DEBUG = $(BIN_DIR)/pipeline_processor_debug
-TARGET_LEGACY = $(BIN_DIR)/pipeline_processor_legacy
+# TARGET_LEGACY = $(BIN_DIR)/pipeline_processor_legacy
 
 # Default target
 all: $(TARGET)
@@ -37,8 +37,8 @@ all: $(TARGET)
 debug: CXXFLAGS += $(DEBUG_FLAGS)
 debug: $(TARGET_DEBUG)
 
-# Legacy version (original main.cpp)
-legacy: $(TARGET_LEGACY)
+# # Legacy version (original main.cpp)
+# legacy: $(TARGET_LEGACY)
 
 # Create directories
 $(BUILD_DIR) $(BIN_DIR):
@@ -60,9 +60,9 @@ $(TARGET): $(OBJECTS) main_modular.cpp | $(BIN_DIR)
 $(TARGET_DEBUG): $(OBJECTS) main_modular.cpp | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $(DEBUG_FLAGS) $(INCLUDE_DIRS) $(OBJECTS) main_modular.cpp -o $@
 
-# Link legacy version
-$(TARGET_LEGACY): main.cpp | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) main.cpp $(SRC_DIR)/tokenizer/tokenizer_wrapper.cpp -o $@
+# # Link legacy version
+# $(TARGET_LEGACY): main.cpp | $(BIN_DIR)
+# 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) main.cpp $(SRC_DIR)/tokenizer/tokenizer_wrapper.cpp -o $@
 
 # Clean build files
 clean:
@@ -76,9 +76,9 @@ run: $(TARGET)
 run-debug: $(TARGET_DEBUG)
 	./$(TARGET_DEBUG)
 
-# Run the legacy version
-run-legacy: $(TARGET_LEGACY)
-	./$(TARGET_LEGACY)
+# # Run the legacy version
+# run-legacy: $(TARGET_LEGACY)
+# 	./$(TARGET_LEGACY)
 
 # Install (copy to system location - optional)
 install: $(TARGET)
@@ -103,14 +103,14 @@ help:
 	@echo "  structure   - Show project file structure"
 	@echo "  help        - Show this help message"
 
-# Performance test
-performance-test: $(TARGET) $(TARGET_LEGACY)
-	@echo "=== Performance Comparison ==="
-	@echo "Running modular version..."
-	@time ./$(TARGET)
-	@echo ""
-	@echo "Running legacy version..."
-	@time ./$(TARGET_LEGACY)
+# # Performance test
+# performance-test: $(TARGET) $(TARGET_LEGACY)
+# 	@echo "=== Performance Comparison ==="
+# 	@echo "Running modular version..."
+# 	@time ./$(TARGET)
+# 	@echo ""
+# 	@echo "Running legacy version..."
+# 	@time ./$(TARGET_LEGACY)
 
 # Dependency tracking
 -include $(OBJECTS:.o=.d)

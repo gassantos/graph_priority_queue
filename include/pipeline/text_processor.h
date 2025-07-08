@@ -42,6 +42,24 @@ namespace pipeline {
         ~TextProcessor() = default;
 
         /**
+         * @brief Limpa texto de forma puramente sequencial (sem otimizações do compilador)
+         * @param texts Vetor de textos a serem limpos
+         */
+        static void cleanTextSequential(std::vector<std::string>& texts);
+
+        /**
+         * @brief Normaliza texto de forma puramente sequencial
+         * @param texts Vetor de textos a serem normalizados
+         */
+        static void normalizeTextSequential(std::vector<std::string>& texts);
+
+        /**
+         * @brief Tokenização de palavras de forma puramente sequencial
+         * @param texts Vetor de textos a serem tokenizados
+         */
+        static void wordTokenizationSequential(std::vector<std::string>& texts);
+
+        /**
          * @brief Realiza limpeza do texto (remove HTML, caracteres especiais, etc.)
          * @param texts Vetor de textos a serem limpos
          */
