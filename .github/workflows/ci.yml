@@ -7,6 +7,13 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  checks: write
+  pull-requests: write
+
 env:
   BUILD_TYPE: Release
 
@@ -44,7 +51,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Cache dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cache/vcpkg
@@ -61,7 +68,7 @@ jobs:
           cmake \
           ninja-build \
           libgtest-dev \
-          googletest \
+          libgmock-dev \
           valgrind \
           lcov \
           ${{ matrix.compiler }}
@@ -71,13 +78,13 @@ jobs:
         echo "CC=${{ matrix.cc }}" >> $GITHUB_ENV
         echo "CXX=${{ matrix.cxx }}" >> $GITHUB_ENV
         
-    - name: Build Google Test (if needed)
+    - name: Build and install Google Test
       run: |
-        if [ ! -f /usr/lib/x86_64-linux-gnu/libgtest.a ]; then
+        # Ensure Google Test is properly built and installed
+        if [ ! -f /usr/local/lib/libgtest.a ]; then
           cd /usr/src/googletest
-          sudo cmake -B build -DCMAKE_BUILD_TYPE=Release
-          sudo cmake --build build
-          sudo cp build/lib/*.a /usr/lib/x86_64-linux-gnu/
+          sudo cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+          sudo cmake --build build --target install
         fi
         
     - name: Configure CMake
@@ -112,11 +119,11 @@ jobs:
         elif [ -f build/tests ]; then
           cd build && ctest --output-on-failure --verbose
         else
-          make test
+          make run-tests
         fi
         
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-${{ matrix.os }}-${{ matrix.compiler }}
@@ -178,7 +185,7 @@ jobs:
         xargs clang-format --dry-run --Werror || true
         
     - name: Upload analysis results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: static-analysis-results
@@ -242,7 +249,7 @@ jobs:
         name: codecov-umbrella
         
     - name: Upload coverage artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: coverage-html/
@@ -294,7 +301,7 @@ jobs:
           ./bin/run_tests || true
           
     - name: Upload Valgrind results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: valgrind-results
@@ -349,7 +356,7 @@ jobs:
         fi
         
     - name: Upload performance results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: performance-report
         path: performance-report.txt

@@ -9,6 +9,11 @@ on:
     - cron: '0 0 * * 1'  # Weekly on Monday
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
 jobs:
   # Job 1: Dependency vulnerability scanning
   dependency-scan:
@@ -78,7 +83,7 @@ jobs:
           src/ include/ main.cpp || true
           
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-reports
