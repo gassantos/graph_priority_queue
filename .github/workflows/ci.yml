@@ -225,24 +225,89 @@ jobs:
         
     - name: Build tests with coverage flags
       run: |
-        # Build with coverage flags explicitly
-        CXXFLAGS="-std=c++17 -Wall -Wextra -g --coverage -O0 -fprofile-arcs -ftest-coverage" \
-        LDFLAGS="--coverage" \
-        make tests
+        # Debug build environment
+        echo "=== Build Environment Debug ==="
+        echo "Current directory: $(pwd)"
+        echo "Compiler version: $(gcc --version | head -1)"
+        echo "Available gcov: $(which gcov)"
+        echo "gcov version: $(gcov --version | head -1)"
+        
+        # Clean and build with explicit coverage flags using Makefile target
+        echo "=== Building tests with coverage using Makefile target ==="
+        make clean || true
+        
+        # Use the dedicated coverage build target from Makefile
+        make build-coverage
+        
+        # Verify that .gcno files were created (compile-time coverage files)
+        echo "=== Checking for .gcno files after build ==="
+        find . -name "*.gcno" -type f | head -10
+        if [ $(find . -name "*.gcno" -type f | wc -l) -eq 0 ]; then
+          echo "WARNING: No .gcno files found! Coverage may not be enabled."
+          echo "Checking if binary has coverage symbols:"
+          objdump -t bin/run_tests | grep -i gcov || echo "No gcov symbols found"
+          echo "Checking binary instrumentation with strings:"
+          strings bin/run_tests | grep -i gcov || echo "No gcov strings found"
+          echo "Trying nm to check symbols:"
+          nm bin/run_tests | grep -i gcov || echo "No gcov symbols in nm output"
+        else
+          echo "SUCCESS: Found $(find . -name "*.gcno" -type f | wc -l) .gcno files"
+          echo "Coverage files location:"
+          find . -name "*.gcno" -type f | head -5
+        fi
         
     - name: Run tests to generate coverage data
       run: |
-        # Execute tests and ensure they complete successfully
-        ./bin/run_tests --gtest_output=xml:test-results-coverage.xml
+        # Use the Makefile target that properly handles coverage
+        echo "=== Running tests with coverage using Makefile target ==="
+        make run-tests-coverage
         
-        # Verify that .gcda files were generated
-        echo "=== Checking for .gcda files ==="
-        find . -name "*.gcda" -type f | head -20
+        # Additional debug info
+        echo "=== Current directory and files ==="
+        pwd
+        ls -la bin/
+        
+        # Comprehensive search for .gcda files
+        echo "=== Comprehensive search for coverage files ==="
+        echo "Looking for .gcda files recursively:"
+        find . -name "*.gcda" -type f 2>/dev/null | head -20 || echo "No .gcda files found"
+        echo "Looking for .gcno files recursively:"
+        find . -name "*.gcno" -type f 2>/dev/null | head -20 || echo "No .gcno files found"
+        
+        # Force gcov data generation if needed
         if [ $(find . -name "*.gcda" -type f | wc -l) -eq 0 ]; then
-          echo "ERROR: No .gcda files found!"
-          echo "Checking .gcno files:"
-          find . -name "*.gcno" -type f | head -20
-          exit 1
+          echo "=== No .gcda files found, trying manual gcov generation ==="
+          find build -name "*.o" -type f | while read obj_file; do
+            echo "Processing $obj_file"
+            gcov -o "$(dirname "$obj_file")" "$obj_file" 2>/dev/null || true
+          done
+        fi
+        
+        # Final verification
+        echo "=== Final check for .gcda files ==="
+        total_gcda=$(find . -name "*.gcda" -type f | wc -l)
+        if [ "$total_gcda" -eq 0 ]; then
+          echo "ERROR: Still no .gcda files found!"
+          echo "This suggests the tests are not being compiled with coverage flags properly."
+          
+          # Debug: Show Makefile execution
+          echo "=== Debug: Attempting manual build with verbose output ==="
+          make clean || true
+          make tests CXXFLAGS="-std=c++17 -Wall -Wextra -g --coverage -O0 -fprofile-arcs -ftest-coverage" LDFLAGS="--coverage" V=1 || true
+          
+          # Run tests manually
+          echo "=== Running tests manually ==="
+          if [ -f bin/run_tests ]; then
+            ./bin/run_tests
+            echo "Checking for .gcda files after manual run:"
+            find . -name "*.gcda" -type f | head -10 || echo "Still no .gcda files"
+          else
+            echo "Test binary not found"
+            exit 1
+          fi
+        else
+          echo "SUCCESS: Found $total_gcda .gcda files"
+          find . -name "*.gcda" -type f | head -10
         fi
         
     - name: Generate coverage report

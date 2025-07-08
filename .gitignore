@@ -58,3 +58,11 @@ test_pipeline_data.csv
 *.csv.tmp
 
 # Keep test_docs.csv as it contains real sample data for testing
+
+# Ignore coverage data files
+cov/
+*.gcda
+*.gcno
+*.gcov
+*.html
+test-*.xml

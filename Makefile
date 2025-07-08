@@ -70,6 +70,9 @@ $(TARGET_DEBUG): $(OBJECTS) main.cpp | $(BIN_DIR)
 # Link test version
 $(TARGET_TESTS): $(OBJECTS) $(TEST_SOURCES) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) $(OBJECTS) $(TEST_SOURCES) $(LDFLAGS) -lgtest -lgtest_main -pthread -o $@
+	@echo "Test binary created with flags: $(CXXFLAGS) $(LDFLAGS)"
+	@echo "Checking if binary is instrumented:"
+	@strings $@ | grep -q "__gcov" && echo "Binary has gcov instrumentation" || echo "WARNING: Binary may not have gcov instrumentation"
 
 # Clean build files
 clean:
@@ -100,16 +103,22 @@ clean-coverage:
 
 build-coverage:
 	@echo "Building tests with coverage flags..."
+	# Force rebuild of all object files with coverage flags
+	rm -f $(OBJECTS) $(TARGET_TESTS)
 	$(MAKE) tests \
 		CXXFLAGS="-std=c++17 -Wall -Wextra -g --coverage -O0 -fprofile-arcs -ftest-coverage" \
 		LDFLAGS="--coverage"
 
-run-tests-coverage: $(TARGET_TESTS)
+run-tests-coverage:
 	@echo "Running tests to generate coverage data..."
+	@echo "Test binary location: $(TARGET_TESTS)"
+	@if [ ! -f "$(TARGET_TESTS)" ]; then echo "ERROR: Test binary not found!"; exit 1; fi
 	./$(TARGET_TESTS) --gtest_output=xml:test-results-coverage.xml
 	@echo "Coverage data files generated:"
-	@find . -name "*.gcda" -type f 2>/dev/null || echo "No .gcda files found"
-	@find . -name "*.gcno" -type f 2>/dev/null || echo "No .gcno files found"
+	@echo "=== .gcda files ==="
+	@find . -name "*.gcda" -type f 2>/dev/null | head -10 || echo "No .gcda files found"
+	@echo "=== .gcno files ==="
+	@find . -name "*.gcno" -type f 2>/dev/null | head -10 || echo "No .gcno files found"
 
 # Backward compatibility
 tests-coverage: build-coverage
