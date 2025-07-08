@@ -1,5 +1,4 @@
 # Makefile for Legal Document Processing Pipeline
-# Modular C++ Project
 
 # Compiler and flags
 CXX = g++
@@ -25,9 +24,17 @@ SOURCES = $(SRC_DIR)/types.cpp \
 # Object files
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 
+# Test files
+TEST_SOURCES = tests/test_csv_reader.cpp \
+               tests/test_text_processor.cpp \
+               tests/test_workflow_scheduler.cpp \
+               tests/test_pipeline_manager.cpp \
+               tests/main_test.cpp
+
 # Executables
 TARGET = $(BIN_DIR)/pipeline_processor
 TARGET_DEBUG = $(BIN_DIR)/pipeline_processor_debug
+TARGET_TESTS = $(BIN_DIR)/run_tests
 
 # Default target
 all: $(TARGET)
@@ -35,6 +42,9 @@ all: $(TARGET)
 # Debug build
 debug: CXXFLAGS += $(DEBUG_FLAGS)
 debug: $(TARGET_DEBUG)
+
+# Test build
+tests: $(TARGET_TESTS)
 
 # Create directories
 $(BUILD_DIR) $(BIN_DIR):
@@ -48,7 +58,7 @@ $(BUILD_DIR)/utils $(BUILD_DIR)/pipeline $(BUILD_DIR)/scheduler $(BUILD_DIR)/tok
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)/utils $(BUILD_DIR)/pipeline $(BUILD_DIR)/scheduler $(BUILD_DIR)/tokenizer
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -c $< -o $@
 
-# Link modular version
+# Link version
 $(TARGET): $(OBJECTS) main.cpp | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) $(OBJECTS) main.cpp -o $@
 
@@ -56,17 +66,28 @@ $(TARGET): $(OBJECTS) main.cpp | $(BIN_DIR)
 $(TARGET_DEBUG): $(OBJECTS) main.cpp | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $(DEBUG_FLAGS) $(INCLUDE_DIRS) $(OBJECTS) main.cpp -o $@
 
+# Link test version
+$(TARGET_TESTS): $(OBJECTS) $(TEST_SOURCES) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) $(OBJECTS) $(TEST_SOURCES) -lgtest -lgtest_main -pthread -o $@
+
 # Clean build files
 clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
 
-# Run the modular version
+# Run the version
 run: $(TARGET)
 	./$(TARGET)
 
 # Run the debug version
 run-debug: $(TARGET_DEBUG)
 	./$(TARGET_DEBUG)
+
+# Run tests
+run-tests: $(TARGET_TESTS)
+	./$(TARGET_TESTS)
+
+# Shorthand for running tests
+test: run-tests
 
 # Install (copy to system location - optional)
 install: $(TARGET)
@@ -80,10 +101,13 @@ structure:
 # Show help
 help:
 	@echo "Available targets:"
-	@echo "  all         - Build modular version (default)"
+	@echo "  all         - Build version (default)"
 	@echo "  debug       - Build debug version with DEBUG flag"
-	@echo "  run         - Build and run modular version"
+	@echo "  tests       - Build test executable"
+	@echo "  run         - Build and run version"
 	@echo "  run-debug   - Build and run debug version"
+	@echo "  run-tests   - Build and run tests"
+	@echo "  test        - Build and run tests (shorthand)"
 	@echo "  clean       - Remove all build files"
 	@echo "  install     - Install to system (requires sudo)"
 	@echo "  structure   - Show project file structure"
@@ -98,7 +122,7 @@ $(BUILD_DIR)/%.d: $(SRC_DIR)/%.cpp | $(BUILD_DIR)/utils $(BUILD_DIR)/pipeline $(
 	@$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -MM -MT $(BUILD_DIR)/$*.o $< > $@
 
 # Phony targets
-.PHONY: all debug clean run run-debug install structure help
+.PHONY: all debug tests clean run run-debug run-tests test install structure help
 
 # Special targets
 .DEFAULT_GOAL := all
