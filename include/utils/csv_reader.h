@@ -73,6 +73,14 @@ namespace utils {
             char delimiter = ';'
         );
 
+        /**
+         * @brief Faz o parse de uma linha CSV (público para teste)
+         * @param line Linha a ser processada
+         * @param delimiter Delimitador usado
+         * @return Vetor com as células da linha
+         */
+        std::vector<std::string> parseLine(const std::string& line, char delimiter);
+
     private:
         /**
          * @brief Remove aspas duplas de uma string, se presentes
@@ -80,14 +88,6 @@ namespace utils {
          * @return String sem aspas duplas
          */
         std::string removeQuotes(const std::string& str);
-
-        /**
-         * @brief Faz o parse de uma linha CSV
-         * @param line Linha a ser processada
-         * @param delimiter Delimitador usado
-         * @return Vetor com as células da linha
-         */
-        std::vector<std::string> parseLine(const std::string& line, char delimiter);
     };
 
 } // namespace utils

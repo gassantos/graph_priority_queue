@@ -7,7 +7,7 @@ namespace legal_doc_pipeline {
 namespace scheduler {
 
     WorkflowScheduler::WorkflowScheduler() 
-        : completed_task_count(0), shutdown_requested(false) {}
+        : completed_task_count(0), shutdown_requested(false), has_dependency_errors(false) {}
 
     WorkflowScheduler::~WorkflowScheduler() {
         shutdown();
@@ -18,22 +18,30 @@ namespace scheduler {
         tasks.emplace(task.id, task);
     }
 
-    void WorkflowScheduler::addDependency(const std::string& task_id, const std::string& dependency_id) {
+    bool WorkflowScheduler::addDependency(const std::string& task_id, const std::string& dependency_id) {
         std::unique_lock<std::mutex> lock(queue_mutex);
         
         // Garante que as tarefas existem
         if (tasks.find(task_id) == tasks.end() || tasks.find(dependency_id) == tasks.end()) {
             std::cerr << "Erro: Tarefa '" << task_id << "' ou '" << dependency_id 
                       << "' não encontrada ao adicionar dependência." << std::endl;
-            return;
+            has_dependency_errors = true;
+            return false;
         }
         
         tasks.at(task_id).dependencies.push_back(dependency_id);
         tasks.at(dependency_id).dependents.push_back(task_id);
         tasks.at(task_id).remaining_dependencies++;
+        return true;
     }
 
     bool WorkflowScheduler::run(const std::vector<std::string>& input_data, int num_workers) {
+        // Verifica se há erros de dependência
+        if (has_dependency_errors) {
+            std::cerr << "Erro: Há dependências inválidas no grafo!" << std::endl;
+            return false;
+        }
+        
         // Valida o grafo antes de executar
         if (!validateDependencyGraph()) {
             std::cerr << "Erro: Grafo de dependências contém ciclos!" << std::endl;
@@ -195,6 +203,7 @@ namespace scheduler {
         processed_texts.clear();
         completed_task_count = 0;
         shutdown_requested = false;
+        has_dependency_errors = false;
     }
 
     bool WorkflowScheduler::validateDependencyGraph() const {

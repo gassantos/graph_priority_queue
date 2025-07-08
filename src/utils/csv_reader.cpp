@@ -127,20 +127,41 @@ namespace utils {
     }
 
     std::string CsvReader::removeQuotes(const std::string& str) {
-        if (str.length() >= 2 && str.front() == '"' && str.back() == '"') {
-            return str.substr(1, str.length() - 2);
+        // Como o parser já remove as aspas, só precisamos remover espaços
+        std::string result = str;
+        // Remove espaços no início e no final
+        size_t start = result.find_first_not_of(" \t");
+        if (start != std::string::npos) {
+            result = result.substr(start);
         }
-        return str;
+        size_t end = result.find_last_not_of(" \t");
+        if (end != std::string::npos) {
+            result = result.substr(0, end + 1);
+        }
+        return result;
     }
 
     std::vector<std::string> CsvReader::parseLine(const std::string& line, char delimiter) {
         std::vector<std::string> cells;
-        std::stringstream ss(line);
-        std::string cell;
+        std::string current_cell;
+        bool in_quotes = false;
         
-        while (std::getline(ss, cell, delimiter)) {
-            cells.push_back(cell);
+        for (size_t i = 0; i < line.length(); ++i) {
+            char c = line[i];
+            
+            if (c == '"') {
+                in_quotes = !in_quotes;
+                // Não adiciona as aspas ao conteúdo da célula
+            } else if (c == delimiter && !in_quotes) {
+                cells.push_back(current_cell);
+                current_cell.clear();
+            } else {
+                current_cell += c;
+            }
         }
+        
+        // Adiciona a última célula
+        cells.push_back(current_cell);
         
         return cells;
     }

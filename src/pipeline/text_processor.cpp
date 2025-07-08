@@ -42,6 +42,14 @@ namespace pipeline {
             // Remove tags HTML
             text = std::regex_replace(text, std::regex("<.*?>"), " ");
             
+            // Decodifica entidades HTML comuns
+            text = std::regex_replace(text, std::regex("&amp;"), "&");
+            text = std::regex_replace(text, std::regex("&lt;"), "<");
+            text = std::regex_replace(text, std::regex("&gt;"), ">");
+            text = std::regex_replace(text, std::regex("&quot;"), "\"");
+            text = std::regex_replace(text, std::regex("&apos;"), "'");
+            text = std::regex_replace(text, std::regex("&nbsp;"), " ");
+            
             // Mantém apenas caracteres alfanuméricos, acentuados e espaços
             text = std::regex_replace(text, 
                 std::regex("[^a-zA-Z0-9\\sÀ-ÿ]", std::regex::ECMAScript | std::regex::collate), 
@@ -269,6 +277,14 @@ namespace pipeline {
             
             // Remove tags HTML
             text = std::regex_replace(text, std::regex("<.*?>"), " ");
+            
+            // Decodifica entidades HTML comuns
+            text = std::regex_replace(text, std::regex("&amp;"), "&");
+            text = std::regex_replace(text, std::regex("&lt;"), "<");
+            text = std::regex_replace(text, std::regex("&gt;"), ">");
+            text = std::regex_replace(text, std::regex("&quot;"), "\"");
+            text = std::regex_replace(text, std::regex("&apos;"), "'");
+            text = std::regex_replace(text, std::regex("&nbsp;"), " ");
             
             // Mantém apenas caracteres alfanuméricos, acentuados e espaços
             text = std::regex_replace(text, 

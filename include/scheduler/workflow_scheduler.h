@@ -34,6 +34,7 @@ namespace scheduler {
         std::vector<std::string> processed_texts;                       ///< Dados sendo processados
         std::vector<std::thread> workers;                               ///< Pool de threads trabalhadoras
         std::atomic<bool> shutdown_requested;                           ///< Flag para shutdown gracioso
+        std::atomic<bool> has_dependency_errors;                        ///< Flag para erros de dependência
 
         /**
          * @brief Função executada por cada thread trabalhadora
@@ -50,12 +51,6 @@ namespace scheduler {
          * @brief Inicializa a fila de tarefas prontas
          */
         void initializeReadyQueue();
-
-        /**
-         * @brief Verifica se todas as tarefas foram concluídas
-         * @return true se todas as tarefas foram concluídas
-         */
-        bool allTasksCompleted() const;
 
     public:
         /**
@@ -78,8 +73,9 @@ namespace scheduler {
          * @brief Adiciona uma dependência entre tarefas
          * @param task_id ID da tarefa dependente
          * @param dependency_id ID da tarefa da qual depende
+         * @return true se a dependência foi adicionada com sucesso
          */
-        void addDependency(const std::string& task_id, const std::string& dependency_id);
+        bool addDependency(const std::string& task_id, const std::string& dependency_id);
 
         /**
          * @brief Executa o workflow com o número especificado de workers
@@ -128,6 +124,12 @@ namespace scheduler {
          * @return String com a representação do grafo
          */
         std::string getDependencyGraphString() const;
+
+        /**
+         * @brief Verifica se todas as tarefas foram concluídas
+         * @return true se todas as tarefas foram concluídas
+         */
+        bool allTasksCompleted() const;
 
         // Desabilita cópia e atribuição
         WorkflowScheduler(const WorkflowScheduler&) = delete;
