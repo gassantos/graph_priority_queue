@@ -37,13 +37,9 @@ set(LIBRARY_SOURCES
 add_library(pipeline_lib STATIC ${LIBRARY_SOURCES})
 target_link_libraries(pipeline_lib Threads::Threads)
 
-# Main executable (modular version)
+# Main executable
 add_executable(pipeline_processor main_modular.cpp)
 target_link_libraries(pipeline_processor pipeline_lib)
-
-# Legacy executable
-add_executable(pipeline_processor_legacy main.cpp src/tokenizer/tokenizer_wrapper.cpp)
-target_link_libraries(pipeline_processor_legacy Threads::Threads)
 
 # Debug version
 add_executable(pipeline_processor_debug main_modular.cpp)

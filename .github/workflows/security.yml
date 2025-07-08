@@ -1,0 +1,184 @@
+name: Security and Dependency Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Monday
+  workflow_dispatch:
+
+jobs:
+  # Job 1: Dependency vulnerability scanning
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install scanning tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          clamav \
+          clamav-daemon \
+          trivy
+          
+    - name: Update ClamAV database
+      run: |
+        sudo freshclam
+        
+    - name: Scan for malware
+      run: |
+        clamscan -r --bell -i . || true
+        
+    - name: Scan container images (if any)
+      run: |
+        # Scan for vulnerable dependencies in the project
+        echo "Scanning project for known vulnerabilities..."
+        find . -name "*.cpp" -o -name "*.h" | head -10 | xargs file
+        
+  # Job 2: Code security analysis
+  security-analysis:
+    name: Security Code Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install security analysis tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cppcheck \
+          flawfinder \
+          rats
+          
+    - name: Run Flawfinder
+      run: |
+        flawfinder --error-level=0 --html --output=flawfinder-report.html src/ include/ main.cpp || true
+        
+    - name: Run RATS (static analyzer)
+      run: |
+        rats --html src/ include/ main.cpp > rats-report.html || true
+        
+    - name: Run enhanced cppcheck for security
+      run: |
+        cppcheck --enable=all \
+          --std=c++17 \
+          --platform=unix64 \
+          --error-exitcode=0 \
+          --xml \
+          --xml-version=2 \
+          --output-file=security-cppcheck.xml \
+          src/ include/ main.cpp || true
+          
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          flawfinder-report.html
+          rats-report.html
+          security-cppcheck.xml
+          
+  # Job 3: License compliance
+  license-check:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check license headers
+      run: |
+        echo "Checking for license headers in source files..."
+        
+        missing_license=0
+        for file in $(find src include -name "*.cpp" -o -name "*.h"); do
+          if ! head -10 "$file" | grep -qi "license\|copyright\|spdx"; then
+            echo "Missing license header: $file"
+            missing_license=1
+          fi
+        done
+        
+        if [ $missing_license -eq 1 ]; then
+          echo "Some files are missing license headers"
+          echo "Consider adding SPDX license identifiers or copyright notices"
+        else
+          echo "All source files have license information"
+        fi
+        
+    - name: Check third-party licenses
+      run: |
+        echo "Third-party dependencies and their licenses:"
+        echo "- Google Test: BSD-3-Clause"
+        echo "- Standard C++ Library: Implementation specific"
+        echo "- pthread: LGPL (system library)"
+        
+  # Job 4: Build security
+  build-security:
+    name: Build Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          libgtest-dev \
+          googletest
+          
+    - name: Build Google Test
+      run: |
+        if [ ! -f /usr/lib/x86_64-linux-gnu/libgtest.a ]; then
+          cd /usr/src/googletest
+          sudo cmake -B build -DCMAKE_BUILD_TYPE=Release
+          sudo cmake --build build
+          sudo cp build/lib/*.a /usr/lib/x86_64-linux-gnu/
+        fi
+        
+    - name: Build with security flags
+      run: |
+        make clean
+        CXXFLAGS="-std=c++17 -Wall -Wextra -Werror -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE" \
+        LDFLAGS="-pie -Wl,-z,relro,-z,now" \
+        make all
+        
+    - name: Check binary security features
+      run: |
+        echo "Checking security features in binaries..."
+        if command -v checksec >/dev/null 2>&1; then
+          checksec --file=bin/pipeline_processor
+        else
+          # Manual check
+          echo "Binary security features:"
+          readelf -h bin/pipeline_processor | grep "Type:" || true
+          objdump -h bin/pipeline_processor | grep -E "(\.plt|\.got)" || true
+        fi
+        
+  # Job 5: Container security (if applicable)
+  container-security:
+    name: Container Security
+    runs-on: ubuntu-latest
+    if: false  # Disabled for now, enable when containerizing
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Placeholder for container security
+      run: |
+        echo "Container security scanning would go here"
+        echo "This job is disabled until Docker containerization is implemented"

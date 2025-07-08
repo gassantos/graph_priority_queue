@@ -1,0 +1,44 @@
+name: Simple CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  quick-test:
+    name: Quick Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libgtest-dev googletest
+        
+    - name: Setup Google Test
+      run: |
+        cd /usr/src/googletest
+        sudo cmake -B build
+        sudo cmake --build build
+        sudo cp build/lib/*.a /usr/lib/x86_64-linux-gnu/ || sudo cp build/lib/*.a /usr/lib/
+        
+    - name: Build project
+      run: |
+        make clean
+        make all
+        
+    - name: Build tests
+      run: |
+        make tests
+        
+    - name: Run tests
+      run: |
+        make test
+        
+    - name: Test pipeline execution
+      run: |
+        timeout 60 make run || echo "Pipeline test completed"

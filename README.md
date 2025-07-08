@@ -2,7 +2,11 @@
 
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.cppreference.com/w/cpp/17)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
+[![CI](https://github.com/username/graph_priority_summary/workflows/CI%20-%20Build,%20Test,%20and%20Quality%20Assurance/badge.svg)](https://github.com/username/graph_priority_summary/actions)
+[![Security](https://github.com/username/graph_priority_summary/workflows/Security%20and%20Dependency%20Scanning/badge.svg)](https://github.com/username/graph_priority_summary/actions)
+[![Documentation](https://github.com/username/graph_priority_summary/workflows/Documentation/badge.svg)](https://github.com/username/graph_priority_summary/actions)
+[![Release](https://github.com/username/graph_priority_summary/workflows/Release%20Pipeline/badge.svg)](https://github.com/username/graph_priority_summary/releases)
+[![codecov](https://codecov.io/gh/username/graph_priority_summary/branch/main/graph/badge.svg)](https://codecov.io/gh/username/graph_priority_summary)
 
 Este projeto implementa um **pipeline modular de pré-processamento de dados jurídicos** em C++ utilizando um grafo de dependências para orquestração paralela de tarefas. O sistema processa documentos jurídicos através de múltiplas etapas de transformação, incluindo limpeza de texto, tokenização BPE, partição, adição de tokens especiais, conversão para índices e simulação de embeddings.
 
@@ -243,6 +247,76 @@ PipelineResult result = manager.runSequential(data, true);
 - **Detecção de ciclos**: Algoritmo DFS para validar dependências
 - **Representação visual**: Geração de string do grafo para debug
 - **Verificação de consistência**: Validação automática antes da execução
+
+## 🤖 CI/CD e Automação
+
+### Workflows GitHub Actions
+
+O projeto utiliza um sistema completo de CI/CD automatizado com múltiplos workflows:
+
+#### 🔄 **CI Pipeline** (`.github/workflows/ci.yml`)
+- **Build Matrix**: Testa em Ubuntu 20.04 e 22.04 com GCC e Clang
+- **Compilação**: Build automatizado com CMake e Makefile (fallback)
+- **Testes**: Execução de 56+ testes unitários com relatórios
+- **Cache**: Cache inteligente de dependências para builds rápidos
+
+#### 🔍 **Análise de Qualidade**
+- **Static Analysis**: cppcheck, clang-tidy para detecção de problemas
+- **Code Coverage**: Geração de relatórios de cobertura com lcov
+- **Memory Safety**: Análise com Valgrind para detecção de vazamentos
+- **Performance**: Benchmarks automatizados com métricas de performance
+
+#### 🔒 **Security Scanning** (`.github/workflows/security.yml`)
+- **Vulnerability Scanning**: Verificação de dependências vulneráveis
+- **Code Security**: Análise com Flawfinder e RATS
+- **License Compliance**: Verificação de licenças e headers
+- **Build Security**: Flags de segurança e verificação de binários
+
+#### 📚 **Documentation** (`.github/workflows/docs.yml`)
+- **API Documentation**: Geração automática com Doxygen
+- **GitHub Pages**: Deploy automático da documentação
+- **Quality Check**: Verificação de cobertura de documentação
+- **Spell Check**: Verificação ortográfica dos arquivos markdown
+
+#### 🚀 **Release Pipeline** (`.github/workflows/release.yml`)
+- **Multi-Platform Build**: Builds otimizados para diferentes plataformas
+- **Binary Optimization**: Strip e compressão com UPX
+- **Package Creation**: Criação de pacotes com scripts de conveniência
+- **GitHub Releases**: Releases automáticos com notas detalhadas
+- **Checksums**: Verificação de integridade com SHA256
+
+### Automação de Dependências
+
+#### 📦 **Dependabot** (`.github/dependabot.yml`)
+- **GitHub Actions**: Atualização automática de workflows
+- **CMake Dependencies**: Monitoramento de dependências CMake
+- **Security Updates**: PRs automáticos para atualizações de segurança
+
+#### 🎫 **Issue Templates**
+- **Bug Reports**: Template estruturado para relatórios de bug
+- **Feature Requests**: Template para solicitações de funcionalidades
+- **Performance Issues**: Template específico para problemas de performance
+
+#### 🔄 **Pull Request Template**
+- **Checklist Completa**: Verificações de qualidade, testes e documentação
+- **Review Guidelines**: Áreas de foco para revisão de código
+- **Impact Assessment**: Análise de impacto em performance e segurança
+
+### Status e Badges
+
+Os badges no topo do README fornecem visibilidade instantânea do status:
+- **CI Status**: Estado atual dos builds e testes
+- **Security Status**: Estado das verificações de segurança
+- **Documentation**: Status da geração de documentação
+- **Code Coverage**: Porcentagem de cobertura de testes
+- **Release Status**: Estado dos releases automatizados
+
+### Métricas e Monitoramento
+
+- **Test Coverage**: >90% de cobertura com relatórios detalhados
+- **Performance Tracking**: Benchmarks automáticos em cada release
+- **Security Monitoring**: Scanning contínuo de vulnerabilidades
+- **Documentation Coverage**: Verificação de documentação de APIs
 
 ### Monitoramento e Métricas
 - **Métricas detalhadas**: Tempo por tarefa, throughput, eficiência

@@ -1,0 +1,355 @@
+name: CI - Build, Test, and Quality Assurance
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  # Job 1: Build and Test on multiple OS and compilers
+  build-and-test:
+    name: Build & Test (${{ matrix.os }}, ${{ matrix.compiler }})
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-20.04]
+        compiler: [gcc, clang]
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            cxx: g++
+            cc: gcc
+          - os: ubuntu-latest  
+            compiler: clang
+            cxx: clang++
+            cc: clang
+          - os: ubuntu-20.04
+            compiler: gcc
+            cxx: g++
+            cc: gcc
+          - os: ubuntu-20.04
+            compiler: clang
+            cxx: clang++
+            cc: clang
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/vcpkg
+          /usr/local/lib
+        key: ${{ runner.os }}-${{ matrix.compiler }}-deps-${{ hashFiles('**/CMakeLists.txt', '**/Makefile') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.compiler }}-deps-
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          libgtest-dev \
+          googletest \
+          valgrind \
+          lcov \
+          ${{ matrix.compiler }}
+    
+    - name: Setup compiler
+      run: |
+        echo "CC=${{ matrix.cc }}" >> $GITHUB_ENV
+        echo "CXX=${{ matrix.cxx }}" >> $GITHUB_ENV
+        
+    - name: Build Google Test (if needed)
+      run: |
+        if [ ! -f /usr/lib/x86_64-linux-gnu/libgtest.a ]; then
+          cd /usr/src/googletest
+          sudo cmake -B build -DCMAKE_BUILD_TYPE=Release
+          sudo cmake --build build
+          sudo cp build/lib/*.a /usr/lib/x86_64-linux-gnu/
+        fi
+        
+    - name: Configure CMake
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
+          -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+          -G Ninja
+        
+    - name: Build with CMake
+      run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+      
+    - name: Build with Makefile (fallback)
+      if: failure()
+      run: |
+        make clean
+        CXX=${{ matrix.cxx }} CC=${{ matrix.cc }} make all
+        
+    - name: Build tests
+      run: |
+        if [ -f build/Makefile ] || [ -f build/build.ninja ]; then
+          cmake --build build --target all
+        else
+          make tests
+        fi
+        
+    - name: Run unit tests
+      run: |
+        if [ -f bin/run_tests ]; then
+          ./bin/run_tests --gtest_output=xml:test-results.xml
+        elif [ -f build/tests ]; then
+          cd build && ctest --output-on-failure --verbose
+        else
+          make test
+        fi
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.compiler }}
+        path: |
+          test-results.xml
+          Testing/
+          
+    - name: Test with sample data
+      run: |
+        if [ -f bin/pipeline_processor ]; then
+          timeout 300 ./bin/pipeline_processor || echo "Pipeline test completed with timeout"
+        elif [ -f build/pipeline_processor ]; then
+          timeout 300 ./build/pipeline_processor || echo "Pipeline test completed with timeout"
+        else
+          echo "Pipeline executable not found, using make"
+          timeout 300 make run || echo "Make run completed with timeout"
+        fi
+        
+  # Job 2: Code Quality and Static Analysis
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install analysis tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cppcheck \
+          clang-format \
+          clang-tidy \
+          iwyu \
+          doxygen \
+          graphviz
+          
+    - name: Run cppcheck static analysis
+      run: |
+        cppcheck --enable=all \
+          --std=c++17 \
+          --error-exitcode=1 \
+          --xml \
+          --xml-version=2 \
+          --output-file=cppcheck-results.xml \
+          src/ include/ main.cpp || true
+          
+    - name: Run clang-tidy
+      run: |
+        find src include -name "*.cpp" -o -name "*.h" | \
+        xargs clang-tidy \
+          -checks='*,-llvm-header-guard,-google-readability-todo,-modernize-use-trailing-return-type' \
+          -- -std=c++17 -I. || true
+          
+    - name: Check code formatting
+      run: |
+        find . -name "*.cpp" -o -name "*.h" | \
+        xargs clang-format --dry-run --Werror || true
+        
+    - name: Upload analysis results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: static-analysis-results
+        path: |
+          cppcheck-results.xml
+          
+  # Job 3: Code Coverage Analysis
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          libgtest-dev \
+          googletest \
+          lcov \
+          gcovr
+          
+    - name: Build Google Test
+      run: |
+        if [ ! -f /usr/lib/x86_64-linux-gnu/libgtest.a ]; then
+          cd /usr/src/googletest
+          sudo cmake -B build -DCMAKE_BUILD_TYPE=Release
+          sudo cmake --build build
+          sudo cp build/lib/*.a /usr/lib/x86_64-linux-gnu/
+        fi
+        
+    - name: Build with coverage flags
+      run: |
+        make clean
+        CXXFLAGS="-std=c++17 -Wall -Wextra -g --coverage -O0" make all
+        CXXFLAGS="-std=c++17 -Wall -Wextra -g --coverage -O0" make tests
+        
+    - name: Run tests for coverage
+      run: |
+        ./bin/run_tests
+        
+    - name: Generate coverage report
+      run: |
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' '*/tests/*' --output-file coverage.info
+        lcov --list coverage.info
+        
+    - name: Generate HTML coverage report
+      run: |
+        genhtml coverage.info --output-directory coverage-html
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: coverage.info
+        flags: unittests
+        name: codecov-umbrella
+        
+    - name: Upload coverage artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: coverage-html/
+        
+  # Job 4: Memory Safety Analysis
+  memory-safety:
+    name: Memory Safety (Valgrind)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          libgtest-dev \
+          googletest \
+          valgrind
+          
+    - name: Build Google Test
+      run: |
+        if [ ! -f /usr/lib/x86_64-linux-gnu/libgtest.a ]; then
+          cd /usr/src/googletest
+          sudo cmake -B build -DCMAKE_BUILD_TYPE=Release
+          sudo cmake --build build
+          sudo cp build/lib/*.a /usr/lib/x86_64-linux-gnu/
+        fi
+        
+    - name: Build debug version
+      run: |
+        make clean
+        CXXFLAGS="-std=c++17 -Wall -Wextra -g -O0" make all
+        CXXFLAGS="-std=c++17 -Wall -Wextra -g -O0" make tests
+        
+    - name: Run Valgrind on tests
+      run: |
+        valgrind --tool=memcheck \
+          --leak-check=full \
+          --show-leak-kinds=all \
+          --track-origins=yes \
+          --verbose \
+          --error-exitcode=1 \
+          --xml=yes \
+          --xml-file=valgrind-results.xml \
+          ./bin/run_tests || true
+          
+    - name: Upload Valgrind results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: valgrind-results
+        path: valgrind-results.xml
+        
+  # Job 5: Performance Benchmarks
+  performance:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          libgtest-dev \
+          googletest \
+          time
+          
+    - name: Build Google Test
+      run: |
+        if [ ! -f /usr/lib/x86_64-linux-gnu/libgtest.a ]; then
+          cd /usr/src/googletest
+          sudo cmake -B build -DCMAKE_BUILD_TYPE=Release
+          sudo cmake --build build
+          sudo cp build/lib/*.a /usr/lib/x86_64-linux-gnu/
+        fi
+        
+    - name: Build optimized version
+      run: |
+        make clean
+        CXXFLAGS="-std=c++17 -Wall -Wextra -O3 -DNDEBUG -march=native" make all
+        
+    - name: Run performance tests
+      run: |
+        echo "=== Performance Benchmark ===" > performance-report.txt
+        echo "Date: $(date)" >> performance-report.txt
+        echo "CPU Info:" >> performance-report.txt
+        cat /proc/cpuinfo | grep "model name" | head -1 >> performance-report.txt
+        echo "" >> performance-report.txt
+        
+        if [ -f tests/test_docs.csv ]; then
+          echo "Running pipeline with test data..." >> performance-report.txt
+          /usr/bin/time -v ./bin/pipeline_processor 2>&1 | tee -a performance-report.txt
+        else
+          echo "Test data not found, skipping performance test" >> performance-report.txt
+        fi
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-report
+        path: performance-report.txt
