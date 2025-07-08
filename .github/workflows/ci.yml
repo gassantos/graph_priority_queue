@@ -160,7 +160,25 @@ jobs:
           clang-tidy \
           iwyu \
           doxygen \
-          graphviz
+          graphviz \
+          flawfinder \
+          gcc \
+          make \
+          libexpat1-dev \
+          curl
+          
+    - name: Install RATS from source
+      run: |
+        echo "Installing RATS (Rough Auditing Tool for Security) from source..."
+        cd /tmp
+        curl -s https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/rough-auditing-tool-for-security/rats-2.4.tgz -o rats-2.4.tgz
+        tar -xzf rats-2.4.tgz
+        cd rats-2.4
+        ./configure --prefix=/usr/local
+        make
+        sudo make install
+        echo "/usr/local/bin" >> $GITHUB_PATH
+        /usr/local/bin/rats --help || echo "RATS installed successfully"
           
     - name: Run cppcheck static analysis
       run: |
@@ -179,6 +197,27 @@ jobs:
           -checks='*,-llvm-header-guard,-google-readability-todo,-modernize-use-trailing-return-type' \
           -- -std=c++17 -I. || true
           
+    - name: Run flawfinder security analysis
+      run: |
+        echo "=== Flawfinder Security Analysis ==="
+        flawfinder --minlevel=0 --html --context --columns \
+          src/ include/ main.cpp > flawfinder-report.html || true
+        # Also generate text output for easier CI viewing
+        flawfinder --minlevel=1 --quiet \
+          src/ include/ main.cpp > flawfinder-summary.txt || true
+        echo "Flawfinder completed. Summary:"
+        cat flawfinder-summary.txt || echo "No issues found by flawfinder"
+        
+    - name: Run RATS security analysis
+      run: |
+        echo "=== RATS Security Analysis ==="
+        /usr/local/bin/rats --html \
+          src/ include/ main.cpp > rats-report.html || true
+        # Also generate text output for easier CI viewing  
+        /usr/local/bin/rats --quiet src/ include/ main.cpp > rats-summary.txt || true
+        echo "RATS completed. Summary:"
+        cat rats-summary.txt || echo "No issues found by RATS"
+          
     - name: Check code formatting
       run: |
         find . -name "*.cpp" -o -name "*.h" | \
@@ -191,6 +230,10 @@ jobs:
         name: static-analysis-results
         path: |
           cppcheck-results.xml
+          flawfinder-report.html
+          flawfinder-summary.txt
+          rats-report.html
+          rats-summary.txt
           
   # Job 3: Code Coverage Analysis
   coverage:
