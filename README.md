@@ -173,18 +173,6 @@ O pipeline baseado em Grafo de Prioridades para pré-processamento de textos jur
 - **Recomendação automática**: Indica o melhor modo para o volume de dados
 
 
-### **🏆 CONCLUSÃO**
-
-O projeto foi bem-sucedido em todos os aspectos:
-
-1. **✅ Paralelismo real implementado** através de particionamento de dados
-2. **✅ Três modos de execução** validados e comparados
-3. **✅ Performance significativamente melhorada** (5.24x speedup)
-4. **✅ Estatísticas detalhadas** implementadas para todos os cenários
-5. **✅ Código limpo e documentado** sem warnings de compilação
-6. **✅ Validação completa** com testes de consistência e performance
-
-
 ## 📈 Roadmap e Próximos Passos
 
 - [ ] **Integração com HuggingFace Tokenizers (pybind)**
