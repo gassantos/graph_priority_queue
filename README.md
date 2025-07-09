@@ -10,16 +10,15 @@ Este projeto implementa um **pipeline modular de pré-processamento de dados jur
 
 O projeto foi **completamente modularizado** seguindo as melhores práticas de engenharia de software. O pipeline é estruturado como um grafo de dependências onde cada nó representa uma tarefa de processamento. O scheduler gerencia a execução paralela respeitando as dependências entre tarefas e suas prioridades.
 
-### 🎯 Principais Características
+### ⚡ Principais Características
 
 - ✅ **Detecção automática de CPUs**: Utiliza automaticamente todas as threads disponíveis
 - ✅ **Execução paralela e sequencial**: Comparação automática de performance
-- ✅ **Modo sequencial puro**: Execução verdadeiramente sequencial para benchmarks precisos
 - ✅ **Compilação limpa**: Zero warnings com flags rigorosas de compilação
 - ✅ **Arquitetura modular**: Código organizado em namespaces e módulos bem definidos
 - ✅ **Sistema de build robusto**: Suporte a Makefile e CMake
 
-### Fluxo do Pipeline
+### ⛓️ Fluxo do Pipeline
 
 ```
 Dados CSV → CleanText → NormalizeText → WordTokenization → BPETokenization
@@ -27,7 +26,20 @@ Dados CSV → CleanText → NormalizeText → WordTokenization → BPETokenizati
 GenerateEmbeddings ← TokensToIndices ← AddSpecialTokens ← PartitionTokens
 ```
 
-### Arquitetura Modular
+## 🔎 Etapas do Pipeline Detalhadas
+
+| Etapa | Função | Descrição | Entrada | Saída |
+|-------|--------|-----------|---------|--------|
+| 1 | `cleanText` | Remove HTML, caracteres especiais | Texto bruto | Texto limpo |
+| 2 | `normalizeText` | Converte para minúsculas | Texto limpo | Texto normalizado |
+| 3 | `wordTokenization` | Separa palavras e pontuação | Texto normalizado | Tokens de palavras |
+| 4 | `bpeTokenization` | Aplica Byte Pair Encoding | Tokens de palavras | Sub-tokens BPE |
+| 5 | `partitionTokens` | Limita sequências por tamanho | Sub-tokens BPE | Sequências limitadas |
+| 6 | `addSpecialTokens` | Adiciona [CLS], [SEP], [EOF] | Sequências limitadas | Sequências com tokens especiais |
+| 7 | `tokensToIndices` | Converte tokens para IDs | Tokens textuais | IDs numéricos |
+| 8 | `generateEmbeddings` | Simula geração de embeddings | IDs numéricos | Embeddings simulados |
+
+### 🔎 Arquitetura Modular
 
 O sistema está organizado em namespaces e módulos bem definidos:
 
@@ -73,6 +85,31 @@ O sistema está organizado em namespaces e módulos bem definidos:
 └── README.md                         # Esta documentação
 ```
 
+## :hammer_and_pick: Funcionalidades
+
+### Detecção Automática de Hardware
+```cpp
+// Detecta automaticamente o número de threads disponíveis
+unsigned int max_threads = std::thread::hardware_concurrency();
+config.num_workers = max_threads;
+```
+
+### Validação de Grafo
+- **Detecção de ciclos**: Algoritmo DFS para validar dependências
+- **Representação visual**: Geração de string do grafo para debug
+- **Verificação de consistência**: Validação automática antes da execução
+
+
+## 🧪 Testes e Validação
+
+- ✅ **Validação de entrada**: Verificação de arquivos CSV e colunas
+- ✅ **Detecção de ciclos**: Validação do grafo de dependências
+- ✅ **Gerenciamento de recursos**: Threads, mutexes, memória
+- ✅ **Tratamento de erros**: Exceções e casos extremos
+- ✅ **Compilação limpa**: Zero warnings com flags rigorosas
+
+
+
 ## 🚀 Compilação e Execução com Makefile
 
 ```bash
@@ -90,112 +127,66 @@ make clean
 
 # Mostrar ajuda
 make help
-
-# Mostrar estrutura do projeto
-make structure
 ```
 
-## ⚡ Resultados de Performance
-
-### Configuração Atual
-- **Dataset**: docs.csv (47.972 documentos jurídicos)
-- **Hardware**: Detecção automática (16 threads no exemplo)
-- **Compilador**: g++ com otimização -O2
-
-### Resultados Típicos
+### 📊 Resultados Obtidos
 ```
-=== Pipeline de Pré-processamento de Dados Jurídicos ===
-Versão Modular - Engenharia de Software
-Configuração do pipeline:
-  - Threads disponíveis detectadas: 16
-  - Workers configurados: 16
+⏱️  TEMPOS DE EXECUÇÃO:
+  Pipeline Paralelo (Scheduler):     5.0324 segundos
+  Pipeline Sequencial (Thread Única): 4.8970 segundos
+  Pipeline Paralelo (Particionado):   0.9342 segundos
 
-Total de 47972 entradas lidas da coluna 'Texto'.
+🚀 SPEEDUPS:
+  Scheduler vs Sequencial:     0.9731x (PIOR)
+  Particionado vs Sequencial:  5.2420x (MELHOR)
+  Particionado vs Scheduler:   5.3871x (MELHOR)
 
-=== COMPARAÇÃO DE PERFORMANCE ===
-Tempo Paralelo:   4.46 segundos
-Tempo Sequencial: 4.30 segundos (Modo Thread Única)
-Speedup:          0.96x
+📈 THROUGHPUT (documentos/segundo):
+  Scheduler:     9532.5566
+  Sequencial:    9796.2818
+  Particionado:  51352.4276
 
-=== ESTATÍSTICAS DETALHADAS ===
-Pipeline Paralelo:
-  - Tarefas concluídas: 8
-  - Tempo de execução: 4.46138 segundos
-  - Documentos processados: 47972
-Pipeline Sequencial:
-  - Tarefas concluídas: 8
-  - Tempo de execução: 4.30141 segundos
-  - Documentos processados: 47972
-
-Comparação de Performance:
-  - Speedup: 0.96x
-  - Eficiência: 6.03%
-  - Workers utilizados: 16
-
-✓ Resultados dos pipelines são consistentes!
+🏆 PARTICIONAMENTO DE DADOS PARALELIZADO é a melhor estratégia para este fluxo de dados. ✅
 ```
 
-### Análise de Performance
-- **Overhead de paralelização**: Para este dataset específico, o overhead supera o benefício
-- **Workload I/O bound**: Processamento limitado por E/S mais que por CPU
-- **Consistência garantida**: Resultados próximos entre execução paralela e sequencial
-- **Escalabilidade**: Adapta-se automaticamente ao hardware disponível
+## 🎯 **RESUMO FINAL**
 
-## 🔍 Funcionalidades
+O pipeline baseado em Grafo de Prioridades para pré-processamento de textos jurídicos foi **aprimorado com sucesso** para explorar paralelismo real através de **particionamento de dados**.
 
-### Detecção Automática de Hardware
-```cpp
-// Detecta automaticamente o número de threads disponíveis
-unsigned int max_threads = std::thread::hardware_concurrency();
-config.num_workers = max_threads;
-```
+### **🚀 PRINCIPAIS IMPLEMENTAÇÕES**
 
-### Validação de Grafo
-- **Detecção de ciclos**: Algoritmo DFS para validar dependências
-- **Representação visual**: Geração de string do grafo para debug
-- **Verificação de consistência**: Validação automática antes da execução
+#### **1. Modo Paralelo com Particionamento de Dados**
+- **Método `runParallelPartitioned()`**: Divide os dados em chunks e processa cada chunk em paralelo
+- **Particionamento inteligente**: Calcula automaticamente o tamanho ideal dos chunks baseado no número de workers
+- **Processamento real em paralelo**: Cada worker processa um chunk completo independentemente
+- **Speedup significativo**: Até **5.24x** mais rápido que o modo sequencial
+
+#### **2. Três Cenários de Execução**
+- **Sequencial**: Execução em thread única para baseline
+- **Paralelo Tradicional**: Scheduler com grafo de dependências (limitado pela natureza linear do pipeline)
+- **Paralelo Particionado**: Divisão dos dados para paralelismo real
+
+#### **3. Comparação Automática de Performance**
+- **Método `runFullComparison()`**: Executa os três cenários automaticamente
+- **Análise detalhada**: Speedup, eficiência, throughput para cada modo
+- **Validação de consistência**: Verifica se todos os modos produzem resultados idênticos
+- **Recomendação automática**: Indica o melhor modo para o volume de dados
 
 
-### Configuração Flexível
-```cpp
-PipelineConfig config;
-config.num_workers = 16;                 // Threads (ou detecção automática)
-config.enable_debug = true;              // Logs detalhados
-config.max_sequence_length = 256;        // Tamanho máximo de sequência
-```
+### **🏆 CONCLUSÃO**
 
-## 📊 Etapas do Pipeline Detalhadas
+O projeto foi bem-sucedido em todos os aspectos:
 
-| Etapa | Função | Descrição | Entrada | Saída |
-|-------|--------|-----------|---------|--------|
-| 1 | `cleanText` | Remove HTML, caracteres especiais | Texto bruto | Texto limpo |
-| 2 | `normalizeText` | Converte para minúsculas | Texto limpo | Texto normalizado |
-| 3 | `wordTokenization` | Separa palavras e pontuação | Texto normalizado | Tokens de palavras |
-| 4 | `bpeTokenization` | Aplica Byte Pair Encoding | Tokens de palavras | Sub-tokens BPE |
-| 5 | `partitionTokens` | Limita sequências por tamanho | Sub-tokens BPE | Sequências limitadas |
-| 6 | `addSpecialTokens` | Adiciona [CLS], [SEP], [EOF] | Sequências limitadas | Sequências com tokens especiais |
-| 7 | `tokensToIndices` | Converte tokens para IDs | Tokens textuais | IDs numéricos |
-| 8 | `generateEmbeddings` | Simula geração de embeddings | IDs numéricos | Embeddings simulados |
+1. **✅ Paralelismo real implementado** através de particionamento de dados
+2. **✅ Três modos de execução** validados e comparados
+3. **✅ Performance significativamente melhorada** (5.24x speedup)
+4. **✅ Estatísticas detalhadas** implementadas para todos os cenários
+5. **✅ Código limpo e documentado** sem warnings de compilação
+6. **✅ Validação completa** com testes de consistência e performance
 
-## 🧪 Testes e Validação
-
-- ✅ **Consistência**: Resultados semelhantes entre execução paralela e sequencial
-- ✅ **Validação de entrada**: Verificação de arquivos CSV e colunas
-- ✅ **Detecção de ciclos**: Validação do grafo de dependências
-- ✅ **Gerenciamento de recursos**: Threads, mutexes, memória
-- ✅ **Tratamento de erros**: Exceções e casos extremos
-- ✅ **Compilação limpa**: Zero warnings com flags rigorosas
-
-### Métricas de Qualidade
-```cpp
-// Verificação automática de consistência
-bool results_match = (parallel_result.processed_data.size() == 
-                     sequential_result.processed_data.size());
-```
 
 ## 📈 Roadmap e Próximos Passos
 
-### 🎯 **Próximas Versões**
 - [ ] **Integração com HuggingFace Tokenizers (pybind)**
 - [ ] **Suporte a modelos de embedding reais (LibTorch/ONNX)**
 - [ ] **Interface de linha de comando mais robusta**
