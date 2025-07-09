@@ -105,6 +105,15 @@ namespace legal_doc_pipeline {
         std::string error_message;                ///< Mensagem de erro, se houver
     };
 
+    /**
+     * @brief Resultado da comparação completa de performance
+     */
+    struct ComparisonResult {
+        PipelineResult parallel_result;           ///< Resultado do pipeline paralelo (scheduler)
+        PipelineResult sequential_result;         ///< Resultado do pipeline sequencial
+        PipelineResult partitioned_result;        ///< Resultado do pipeline paralelo particionado
+    };
+
 } // namespace legal_doc_pipeline
 
 #endif // TYPES_H

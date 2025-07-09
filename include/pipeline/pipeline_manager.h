@@ -35,6 +35,7 @@ namespace pipeline {
         // Estatísticas de execução
         mutable double last_parallel_time = 0.0;                   ///< Tempo da última execução paralela
         mutable double last_sequential_time = 0.0;                 ///< Tempo da última execução sequencial
+        mutable double last_partitioned_time = 0.0;                ///< Tempo da última execução paralela particionada
 
         /**
          * @brief Configura as tarefas no scheduler
@@ -98,6 +99,54 @@ namespace pipeline {
         std::pair<PipelineResult, PipelineResult> runComparison(
             const std::vector<std::string>& input_data
         );
+
+        /**
+         * @brief Executa todos os três modos e compara performance
+         * @param input_data Dados de entrada
+         * @return Estrutura com todos os resultados de comparação
+         */
+        ComparisonResult runFullComparison(const std::vector<std::string>& input_data);
+
+        /**
+         * @brief Executa o pipeline em modo paralelo com particionamento de dados
+         * @param input_data Dados de entrada
+         * @return Resultado da execução
+         */
+        PipelineResult runParallelPartitioned(const std::vector<std::string>& input_data);
+
+        /**
+         * @brief Calcula o tamanho ideal de chunk para particionamento
+         * @param total_size Tamanho total dos dados
+         * @param num_workers Número de workers disponíveis
+         * @return Tamanho ideal do chunk
+         */
+        size_t calculateOptimalChunkSize(size_t total_size, size_t num_workers);
+
+        /**
+         * @brief Particiona os dados em chunks para processamento paralelo
+         * @param data Dados a serem particionados
+         * @param chunk_size Tamanho de cada chunk
+         * @return Vector de chunks
+         */
+        std::vector<std::vector<std::string>> partitionData(
+            const std::vector<std::string>& data, size_t chunk_size);
+
+        /**
+         * @brief Processa um chunk de dados sequencialmente
+         * @param chunk_data Dados do chunk
+         * @param chunk_id ID do chunk para debug
+         * @return Dados processados
+         */
+        std::vector<std::string> processChunkSequentially(
+            const std::vector<std::string>& chunk_data, size_t chunk_id);
+
+        /**
+         * @brief Reconstrói os dados processados a partir dos chunks
+         * @param processed_chunks Chunks processados
+         * @return Dados reconstruídos na ordem original
+         */
+        std::vector<std::string> mergeProcessedChunks(
+            const std::vector<std::vector<std::string>>& processed_chunks);
 
         /**
          * @brief Obtém a configuração atual

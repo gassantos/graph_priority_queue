@@ -48,15 +48,17 @@ void displayResults(const legal_doc_pipeline::PipelineResult& result,
  * @brief Função para imprimir estatísticas detalhadas
  * @param parallel_result Resultado do pipeline paralelo
  * @param sequential_result Resultado do pipeline sequencial
+ * @param partitioned_result Resultado do pipeline paralelo particionado
  * @param num_workers Número de workers utilizados
  */
 void printDetailedStats(const legal_doc_pipeline::PipelineResult& parallel_result,
                        const legal_doc_pipeline::PipelineResult& sequential_result,
+                       const legal_doc_pipeline::PipelineResult& partitioned_result,
                        unsigned int num_workers) {
     std::cout << "\n=== ESTATÍSTICAS DETALHADAS ===" << std::endl;
     
     if (parallel_result.success) {
-        std::cout << "Pipeline Paralelo:" << std::endl;
+        std::cout << "Pipeline Paralelo (Scheduler):" << std::endl;
         std::cout << "  - Tarefas concluídas: " << parallel_result.tasks_completed << std::endl;
         std::cout << "  - Tempo de execução: " << parallel_result.execution_time << " segundos" << std::endl;
         std::cout << "  - Documentos processados: " << parallel_result.processed_data.size() << std::endl;
@@ -69,13 +71,31 @@ void printDetailedStats(const legal_doc_pipeline::PipelineResult& parallel_resul
         std::cout << "  - Documentos processados: " << sequential_result.processed_data.size() << std::endl;
     }
     
+    if (partitioned_result.success) {
+        std::cout << "Pipeline Paralelo (Particionado):" << std::endl;
+        std::cout << "  - Tarefas concluídas: " << partitioned_result.tasks_completed << std::endl;
+        std::cout << "  - Tempo de execução: " << partitioned_result.execution_time << " segundos" << std::endl;
+        std::cout << "  - Documentos processados: " << partitioned_result.processed_data.size() << std::endl;
+        std::cout << "  - Chunks processados: " << (partitioned_result.tasks_completed / 8) << std::endl;
+    }
+    
     if (parallel_result.success && sequential_result.success) {
-        double speedup = sequential_result.execution_time / parallel_result.execution_time;
-        double efficiency = speedup / static_cast<double>(num_workers);
+        double speedup_scheduler = sequential_result.execution_time / parallel_result.execution_time;
+        double efficiency_scheduler = speedup_scheduler / static_cast<double>(num_workers);
         
-        std::cout << "\nComparação de Performance:" << std::endl;
-        std::cout << "  - Speedup: " << speedup << "x" << std::endl;
-        std::cout << "  - Eficiência: " << (efficiency * 100) << "%" << std::endl;
+        std::cout << "\nComparação Scheduler vs Sequencial:" << std::endl;
+        std::cout << "  - Speedup: " << speedup_scheduler << "x" << std::endl;
+        std::cout << "  - Eficiência: " << (efficiency_scheduler * 100) << "%" << std::endl;
+        std::cout << "  - Workers utilizados: " << num_workers << std::endl;
+    }
+    
+    if (partitioned_result.success && sequential_result.success) {
+        double speedup_partitioned = sequential_result.execution_time / partitioned_result.execution_time;
+        double efficiency_partitioned = speedup_partitioned / static_cast<double>(num_workers);
+        
+        std::cout << "\nComparação Particionado vs Sequencial:" << std::endl;
+        std::cout << "  - Speedup: " << speedup_partitioned << "x" << std::endl;
+        std::cout << "  - Eficiência: " << (efficiency_partitioned * 100) << "%" << std::endl;
         std::cout << "  - Workers utilizados: " << num_workers << std::endl;
     }
 }
@@ -90,8 +110,10 @@ int main() {
     // Configuração do pipeline
     legal_doc_pipeline::PipelineConfig config;
     
-    // Detecta automaticamente o número máximo de threads disponíveis
-    unsigned int max_threads = std::thread::hardware_concurrency();
+    // Detecta automaticamente o número máximo de threads disponíveis e ajusta pelo número de tarefas (8)
+    unsigned int available_threads = std::thread::hardware_concurrency();
+    unsigned int num_tasks = 8;
+    unsigned int max_threads = (available_threads > 0) ? std::max(1u, num_tasks) : 0;
     
     // Se não conseguir detectar, usa um valor padrão conservador
     if (max_threads == 0) {
@@ -137,20 +159,24 @@ int main() {
         // 2. Executar o pipeline usando o gerenciador
         legal_doc_pipeline::pipeline::PipelineManager manager(config);
 
-        // Executa ambos os pipelines e compara
-        auto [parallel_result, sequential_result] = manager.runComparison(initial_texts);
+        // Executa todos os pipelines e compara
+        auto comparison_result = manager.runFullComparison(initial_texts);
 
         // 3. Exibir resultados
         #ifdef DEBUG
-            displayResults(parallel_result, "Pipeline Paralelo");
-            displayResults(sequential_result, "Pipeline Sequencial");
+            displayResults(comparison_result.parallel_result, "Pipeline Paralelo");
+            displayResults(comparison_result.sequential_result, "Pipeline Sequencial");
+            displayResults(comparison_result.partitioned_result, "Pipeline Particionado");
         #endif
 
-        printDetailedStats(parallel_result, sequential_result, config.num_workers);
+        printDetailedStats(comparison_result.parallel_result, comparison_result.sequential_result, 
+                          comparison_result.partitioned_result, config.num_workers);
 
         // 4. Verificar consistência dos resultados
-        if (parallel_result.success && sequential_result.success) {
-            bool results_match = (parallel_result.processed_data.size() == sequential_result.processed_data.size());
+        if (comparison_result.parallel_result.success && comparison_result.sequential_result.success && 
+            comparison_result.partitioned_result.success) {
+            bool results_match = (comparison_result.parallel_result.processed_data.size() == comparison_result.sequential_result.processed_data.size() &&
+                                 comparison_result.sequential_result.processed_data.size() == comparison_result.partitioned_result.processed_data.size());
             
             if (results_match) {
                 std::cout << "\n✓ Resultados dos pipelines são consistentes!" << std::endl;
