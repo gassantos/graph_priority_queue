@@ -40,6 +40,10 @@ jobs:
           graphviz \
           plantuml
           
+    - name: Create output directory
+      run: |
+        mkdir -p docs/api
+        
     - name: Create Doxygen config
       run: |
         cat > Doxyfile << 'EOF'
@@ -65,7 +69,6 @@ jobs:
         HTML_COLORSTYLE_HUE    = 220
         HTML_COLORSTYLE_SAT    = 100
         HTML_COLORSTYLE_GAMMA  = 80
-        HTML_TIMESTAMP         = YES
         HTML_DYNAMIC_SECTIONS  = YES
         
         GENERATE_LATEX         = NO
@@ -74,9 +77,7 @@ jobs:
         HAVE_DOT               = YES
         DOT_IMAGE_FORMAT       = svg
         INTERACTIVE_SVG        = YES
-        DOT_TRANSPARENT        = YES
         
-        CLASS_DIAGRAMS         = YES
         COLLABORATION_GRAPH    = YES
         GROUP_GRAPHS           = YES
         UML_LOOK               = YES
@@ -89,7 +90,6 @@ jobs:
         STRIP_CODE_COMMENTS    = NO
         
         ALPHABETICAL_INDEX     = YES
-        COLS_IN_ALPHA_INDEX    = 5
         
         MACRO_EXPANSION        = YES
         EXPAND_ONLY_PREDEF     = NO
@@ -106,7 +106,23 @@ jobs:
         
     - name: Generate documentation
       run: |
+        echo "Generating documentation with Doxygen..."
         doxygen Doxyfile
+        
+        # Verify that documentation was generated
+        if [ ! -d "docs/api/html" ]; then
+          echo "Error: Documentation generation failed - html directory not found"
+          exit 1
+        fi
+        
+        if [ ! -f "docs/api/html/index.html" ]; then
+          echo "Error: Documentation generation failed - index.html not found"
+          exit 1
+        fi
+        
+        echo "Documentation generated successfully!"
+        echo "Files created:"
+        find docs/api -name "*.html" | head -10
         
     - name: Create documentation index
       run: |
