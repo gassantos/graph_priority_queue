@@ -186,7 +186,7 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
 
 ## 👥 Autores e Contribuidores
 
-- **[Gustavo Alexandre Santos](https://github.com/gassantos)** - *Desenvolvimento principal e arquitetura*
+- **[Gustavo Alexandre](https://github.com/gassantos)** - *Desenvolvimento principal e arquitetura*
 
 ## 📚 Referências e Recursos
 
