@@ -76,8 +76,7 @@ O sistema está organizado em namespaces e módulos bem definidos:
 │   └── utils/
 │       ├── csv_reader.cpp            # Implementação do leitor CSV
 │       └── timer.cpp                 # Implementação do timer
-├── main_modular.cpp                  # Aplicação principal modular
-├── main.cpp                          # Versão legacy (mantida para comparação)
+├── main.cpp                          # Aplicação principal modular
 ├── Makefile                          # Sistema de build com Make
 ├── CMakeLists.txt                    # Sistema de build com CMake
 ├── LICENSE                           # Licença do projeto
